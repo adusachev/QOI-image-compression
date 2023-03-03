@@ -5,38 +5,7 @@ import numpy as np
 import os
 
 
-class TestEncodeByte(unittest.TestCase):
-
-    # def test_run_simple(self):
-    #     byte = np.array([1, 1, 0, 0, 0, 0, 0, 0])  # empty byte with QOI_RUN tag
-    #     offset = 2
-    #     bits_num = 6
-        
-    #     run_length = 10
-    #     byte = encode_byte_part(run_length, bits_num, offset, byte)
-        
-    #     # self.assertEqual(byte, [1, 1, 0, 0, 1, 0, 1, 0], "Should be 11001010")  # if type(byte) = List
-    #     self.assertTrue(np.all(byte == np.array([1, 1, 0, 0, 1, 0, 1, 0])), "Should be 11001010")  # if type(byte) = np.array
-        
-        
-    # def test_diff_small_simple(self):
-    #     byte = np.array([0, 1, 0, 0, 0, 0, 0, 0])  # empty byte with QOI_DIFF_SMALL tag
-    #     bits_num = 2
-    #     offset = 2
-
-    #     dr = -2  # absolute delta values
-    #     dg = 1
-    #     db = 0
-    #     dr = dr + 2  # delta values with bias 2
-    #     dg = dg + 2
-    #     db = db + 2
-
-    #     for d_channel in [dr, dg, db]:
-    #         byte = encode_byte_part(d_channel, bits_num, offset, byte)
-    #         offset += 2
-        
-    #     self.assertTrue(np.all(byte == np.array([0, 1, 0, 0, 1, 1, 1, 0])), "Should be 01001110")
-        
+class TestEncodeChunk(unittest.TestCase):
         
         
     def test_encode_run(self):
@@ -46,7 +15,7 @@ class TestEncodeByte(unittest.TestCase):
         byte = chunk[0]
         
         self.assertTrue(np.all(byte == np.array([1, 1, 0, 0, 1, 0, 1, 0])), 
-                        "Should be 11001010")
+                        f"Should be 11001010, but get {byte}")
         
         # write to file
         file = './data/tmp.txt'
@@ -57,6 +26,53 @@ class TestEncodeByte(unittest.TestCase):
         file_size = os.path.getsize(file)
         self.assertEqual(file_size, 1, "File size should be 1 byte")
         
+        
+    def test_encode_diff_small(self):
+        dr = 1
+        dg = 0
+        db = -1
+        chunk = encode_diff_small(dr, dg, db)
+        byte = chunk[0]
+        
+        self.assertTrue(np.all(byte == np.array([0, 1, 1, 1, 1, 0, 0, 1])), 
+                        f"Should be 01111001, but get {byte}")
+        
+        # write to file
+        file = './data/tmp.txt'
+        f = open(file, 'w')  # create temporary empty file (or replace existing)
+        f.close()
+        
+        write_chunk(chunk, file)
+        file_size = os.path.getsize(file)
+        self.assertEqual(file_size, 1, "File size should be 1 byte")
+        
+        
+        
+    def test_encode_diff_med(self):
+        dr = 2
+        dg = -5
+        db = -1
+        chunk = encode_diff_med(dr, dg, db)
+        byte1, byte2 = chunk
+        
+        self.assertTrue(np.all(byte1 == np.array([1, 0, 0, 1, 1, 0, 1, 1])), 
+                        f"Should be 10011011, but get {byte1}")
+        
+        self.assertTrue(np.all(byte2 == np.array([1, 1, 1, 1, 1, 1, 0, 0])), 
+                        f"Should be 11111100, but get {byte2}")
+        
+        # write to file
+        file = './data/tmp.txt'
+        f = open(file, 'w')  # create temporary empty file (or replace existing)
+        f.close()
+        
+        write_chunk(chunk, file)
+        file_size = os.path.getsize(file)
+        self.assertEqual(file_size, 2, "File size should be 2 bytes")
+        
+        
+          
+    
         
     def test_encode_rgb(self):
         # encode
