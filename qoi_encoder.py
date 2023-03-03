@@ -23,7 +23,6 @@ def encode_byte_part(value: int, bits_num: int, offset: int, byte: np.array) -> 
     :param byte: _description_
     :return: _description_
     """
-    assert 0 <= value <= 255, f"{value} is too large to be written in a single byte"
     assert 0 <= value <= (2**bits_num), f"{value} is too large to be written in {bits_num} bits"
     assert (offset + bits_num) <= 8, \
         f"{bits_num} bits with offset {offset} can't be paced in single byte"
@@ -61,10 +60,13 @@ def encode_diff_small(dr: int, dg: int, db: int) -> list:
     :param db: _description_
     :return:
     """
+    assert (-2 <= dr <= 1) and (-2 <= dg <= 1) and (-2 <= db <= 1), \
+        f"one of the values dr={dr}, dg={dg}, db={db} does not lie in the range [-2, 1]"
+        
     byte = np.unpackbits(np.array([QOI_DIFF_SMALL], dtype=np.uint8))
     offset = 2
     for d_channel in [dr, dg, db]:
-        d_channel += 2  # delta values with bias 2
+        d_channel += 2  # values are stored with a bias of 2
         byte = encode_byte_part(value=d_channel, bits_num=2, offset=offset, byte=byte)
         offset += 2
 
@@ -81,16 +83,27 @@ def encode_diff_med(dr: int, dg: int, db: int) -> list:
     :param db: _description_
     :return:
     """
+    dr_dg = dr - dg
+    db_dg = db - dg
+    assert -32 <= dg <= 31, f"value dg={dg} does not lie in the range [-32, 31]"
+    assert (-8 <= dr_dg <= 7) and (-8 <= db_dg <= 7), \
+        f"values (dr-dg)={dr_dg}, (db-dg)={db_dg} does not lie in the range [-8, 7]"
+    
+    # Values are stored with a bias of 32 for the green channel 
+    # and a bias of 8 for the red and blue channel:
+    dg += 32
+    dr_dg += 8
+    db_dg += 8
+    
     byte1 = np.unpackbits(np.array([QOI_DIFF_MED], dtype=np.uint8))
     byte1 = encode_byte_part(value=dg, bits_num=6, offset=2, byte=byte1)
     
     byte2 = np.unpackbits(np.array([EMPTY_BYTE], dtype=np.uint8))
-    byte2 = encode_byte_part(value=(dr-dg), bits_num=4, offset=0, byte=byte2)
-    byte2 = encode_byte_part(value=(db-dg), bits_num=4, offset=4, byte=byte2)
+    byte2 = encode_byte_part(value=dr_dg, bits_num=4, offset=0, byte=byte2)
+    byte2 = encode_byte_part(value=db_dg, bits_num=4, offset=4, byte=byte2)
 
     chunk = [byte1, byte2]    
     return chunk
-    
     
     
 
