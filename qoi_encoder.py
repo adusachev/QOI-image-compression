@@ -19,13 +19,13 @@ EMPTY_BYTE = np.array([0, 0, 0, 0, 0, 0, 0, 0])
 
 def encode_byte_part(value: int, bits_num: int, offset: int, byte: np.array) -> np.array:
     """
-    _summary_
+    Write value to a part of byte
 
-    :param value: _description_
-    :param bits_num: _description_
-    :param offset: _description_
-    :param byte: _description_
-    :return: _description_
+    :param value: decimal value to encode (0-255)
+    :param bits_num: number of bits, needed to encode value (1-8)
+    :param offset: bit offset (e.g. the binary value 101 written in byte 00000000 with offset=1 will give 00101000)  
+    :param byte: the byte in which our value will be written (byte is np.array of length 8)
+    :return: byte with written balue
     """
     assert 0 <= value <= (2**bits_num), f"{value} is too large to be written in {bits_num} bits"
     assert (offset + bits_num) <= 8, \
@@ -42,10 +42,11 @@ def encode_byte_part(value: int, bits_num: int, offset: int, byte: np.array) -> 
 
 
 def encode_run(run_length: int) -> list:
-    """_summary_
+    """
+    Encode QOI_RUN chunk
 
-    :param run_length: _description_
-    :return: _description_
+    :param run_length: run-length repeating the previous pixel
+    :return: list of bytes encoding QOI_RUN chunk (here list of one byte, byte is np.array of length 8)
     """
     # byte = np.unpackbits(np.array([QOI_RUN], dtype=np.uint8))
     byte = np.copy(QOI_RUN)
@@ -58,12 +59,13 @@ def encode_run(run_length: int) -> list:
 
 
 def encode_diff_small(dr: int, dg: int, db: int) -> list:
-    """_summary_
+    """
+    Encode QOI_DIFF_SMALL chunk
 
-    :param dr: _description_
-    :param dg: _description_
-    :param db: _description_
-    :return: _description_
+    :param dr: red channel difference from the previous pixel
+    :param dg: green channel difference from the previous pixel
+    :param db: blue channel difference from the previous pixel
+    :return: list of bytes encoding QOI_DIFF_SMALL chunk (here list of one byte, byte is np.array of length 8)
     """
     assert (-2 <= dr <= 1) and (-2 <= dg <= 1) and (-2 <= db <= 1), \
         f"one of the values dr={dr}, dg={dg}, db={db} does not lie in the range [-2, 1]"
@@ -82,12 +84,13 @@ def encode_diff_small(dr: int, dg: int, db: int) -> list:
 
 
 def encode_diff_med(dr: int, dg: int, db: int) -> list:
-    """_summary_
+    """
+    Encode QOI_DIFF_MED chunk
 
-    :param dr: _description_
-    :param dg: _description_
-    :param db: _description_
-    :return: _description_
+    :param dr: red channel difference from the previous pixel
+    :param dg: green channel difference from the previous pixel
+    :param db: blue channel difference from the previous pixel
+    :return: list of bytes encoding QOI_DIFF_MED chunk (here list of two bytes, each byte is np.array of length 8)
     """
     dr_dg = dr - dg
     db_dg = db - dg
@@ -116,12 +119,13 @@ def encode_diff_med(dr: int, dg: int, db: int) -> list:
     
 
 def encode_rgb(R: int, G: int, B: int) -> list:
-    """_summary_
+    """
+    Encode QOI_RGB chunk
 
-    :param R: _description_
-    :param G: _description_
-    :param B: _description_
-    :return: _description_
+    :param R: 8-bit red channel value
+    :param G: 8-bit green channel value
+    :param B: 8-bit blue channel value
+    :return: list of bytes encoding QOI_RGB chunk (here list of four bytes, each byte is np.array of length 8)
     """
     # byte1 = np.unpackbits(np.array([QOI_RGB], dtype=np.uint8))
     byte1 = np.copy(QOI_RGB)
@@ -138,10 +142,11 @@ def encode_rgb(R: int, G: int, B: int) -> list:
     
 
 def write_chunk(chunk: list, file: str) -> None:
-    """_summary_
+    """
+    Writes bytes from chunk to file
 
-    :param byte: _description_
-    :param file: _description_
+    :param chunk: list of bytes (each byte is np.array of length 8)
+    :param file: path to file
     """
     for byte in chunk:
         byte_dec = np.packbits(byte)[0]  # decimal representation of byte
