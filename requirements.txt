@@ -2,3 +2,4 @@ matplotlib
 tqdm
 opencv-python
 seaborn
+numpy
