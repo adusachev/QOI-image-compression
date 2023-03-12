@@ -205,7 +205,7 @@ class Pixel:
 
 def encode_png_debug(R, G, B):
     
-    QOI_RUN = False
+    is_run = False
 
     n = len(R)
     
@@ -222,14 +222,14 @@ def encode_png_debug(R, G, B):
             prev_pixel = Pixel( R[i-1], G[i-1], B[i-1] )
         
         if cur_pixel == prev_pixel:
-            QOI_RUN = True
+            is_run = True
             run_length += 1
             continue
-        elif QOI_RUN:
+        elif is_run:
             run_elem = {'QOI_RUN': run_length}
             encoded_img.append(run_elem)
             run_length = 0
-            QOI_RUN = False
+            is_run = False
         
         
         dr = cur_pixel.r - prev_pixel.r
@@ -262,21 +262,83 @@ def encode_png_debug(R, G, B):
         
 
     # last run processing
-    if QOI_RUN:
+    if is_run:
         run_elem = {'QOI_RUN': run_length}
         encoded_img.append(run_elem)
         run_length = 0
-        QOI_RUN = False
+        is_run = False
         
     return encoded_img
 
 
+
+def encode_png(R, G, B, file='./data/tmp.txt'):
     
+    is_run = False
 
-
-
-if __name__ == '__main__':
+    n = len(R)
     
+    hash_array = [None for i in range(64)]
+    f = open(file, 'w')  # create empty file (or replace existing)
+    f.close()
+    run_length = 0
+
+    for i in range(n):
+        cur_pixel = Pixel(R[i], G[i], B[i])
+        
+        if i == 0:
+            prev_pixel = Pixel(0, 0, 255)
+        else:
+            prev_pixel = Pixel( R[i-1], G[i-1], B[i-1] )
+        
+        if cur_pixel == prev_pixel:
+            is_run = True
+            run_length += 1
+            continue
+        elif is_run:
+            run_chunk = encode_run(run_length)
+            write_chunk(run_chunk, file)
+            run_length = 0
+            is_run = False
+        
+        
+        dr = cur_pixel.r - prev_pixel.r
+        dg = cur_pixel.g - prev_pixel.g
+        db = cur_pixel.b - prev_pixel.b
+        
+        hash_index = cur_pixel.hash_value()
+        
+        if hash_array[hash_index] is None:
+            hash_array[hash_index] = cur_pixel
+            
+        elif hash_array[hash_index] == cur_pixel:
+            index_chunk = encode_index(hash_index)
+            write_chunk(index_chunk, file)
+            continue
+                    
+        if (-2 <= dr <= 1) and (-2 <= dg <= 1) and (-2 <= db <= 1):
+            diff_small_chunk = encode_diff_small(dr, dg, db)
+            write_chunk(diff_small_chunk, file)
+            continue
+        
+        if (-32 <= dg <= 31) and (-8 <= (dr-dg) <= 7) and (-8 <= (db-dg) <= 7):
+            diff_med_chunk = encode_diff_med(dr, dg, db)
+            write_chunk(diff_med_chunk, file)
+            continue
+            
+        rgb_chunk = encode_rgb(cur_pixel.r, cur_pixel.g, cur_pixel.b)
+        write_chunk(rgb_chunk, file)
+
+    # last run processing
+    if is_run:
+        run_chunk = encode_run(run_length)
+        write_chunk(run_chunk, file)
+        run_length = 0
+        is_run = False
+        
+
+
+def test_encode_debug():
     # filename = 'R_video.png'
     # filename = 'pixel_diff.png'
     # filename = '28_pixels.png'
@@ -302,4 +364,28 @@ if __name__ == '__main__':
     file = open(path_to_object, 'wb')
     pickle.dump(encoded_img, file)
     file.close()
+    
+    
+    
+    
+    
+    
+def test_encode():
+    # filename = 'R_video.png'
+    filename = 'pixel_diff.png'
+    # filename = '28_pixels.png'
+    # filename = 'doge.png'
+    
+    # output = f'./qoi_images/{pathlib.Path(filename).stem}.qoi'
+
+    _, R, G, B = read_png(f'./png_images/{filename}')
+    
+    encode_png(R, G, B)
+    
+
+
+
+if __name__ == '__main__':
+    test_encode()
+    
     
