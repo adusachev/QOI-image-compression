@@ -1,10 +1,12 @@
 import time
 import numpy as np
+from termcolor import colored
+
 
 QOI_RUN = 0xc0
 QOI_RUN_ARRAY = np.array([1, 1, 0, 0, 0, 0, 0, 0])
 
-N = 10000000
+N = 10000
 
 def func_1():
     for i in range(N):
@@ -41,7 +43,7 @@ print("--- func 3: %s seconds ---" % (end_time - start_time))
 
 
 
-
+print(colored('hello', 'magenta'), colored('world', 'green'))
 
 
 
