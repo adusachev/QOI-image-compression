@@ -35,7 +35,31 @@ class TestDebugEncoder(unittest.TestCase):
         self.assertEqual(encoded_img, expected, f"Error in encoding {filename}")
         
         
-
+    def test3(self):
+        filename = '28_pixels.png'
+        _, R, G, B = read_png(f'./png_images/{filename}')
+    
+        encoded_img = encode_png_debug(R, G, B)
+        
+        expected = [{'QOI_RGB': [0, 0, 0]},
+                    {'QOI_RGB': [127, 127, 127]},
+                    {'QOI_RGB': [136, 0, 21]},
+                    {'QOI_RUN': 2},
+                    {'QOI_RGB': [255, 255, 255]},
+                    {'QOI_RUN': 1},
+                    {'QOI_RGB': [237, 28, 36]},
+                    {'QOI_RUN': 4},
+                    {'QOI_RGB': [255, 242, 0]},
+                    {'QOI_RUN': 1},
+                    {'QOI_RGB': [163, 73, 164]},
+                    {'QOI_INDEX': 0},
+                    {'QOI_RUN': 5},
+                    {'QOI_RGB': [0, 0, 255]},
+                    {'QOI_RUN': 6}]
+                
+        self.assertEqual(encoded_img, expected, f"Error in encoding {filename}")
+    
+    
 
 if __name__ == '__main__':
     unittest.main()
