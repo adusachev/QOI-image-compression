@@ -6,6 +6,8 @@ from termcolor import colored
 import os
 import pickle
 import pathlib
+from tqdm import tqdm
+import io
 
 
 
@@ -165,7 +167,21 @@ def encode_rgb(R: int, G: int, B: int) -> list:
 
     
 
-def write_chunk(chunk: list, file: str) -> None:
+# def write_chunk(chunk: list, file: str) -> None:
+#     """
+#     Writes bytes from single chunk to file
+
+#     :param chunk: list of bytes (each byte is np.array of length 8)
+#     :param file: path to file
+#     """
+#     for byte in chunk:
+#         byte_dec = np.packbits(byte)[0]  # decimal representation of byte
+#         binary = bytes([byte_dec])  # convert decimal num (0, 256) to type bytes
+        
+#         with open(file, 'ab') as f:
+#             f.write(binary)
+
+def write_chunk(chunk: list, f: io.BufferedWriter) -> None:
     """
     Writes bytes from single chunk to file
 
@@ -176,8 +192,7 @@ def write_chunk(chunk: list, file: str) -> None:
         byte_dec = np.packbits(byte)[0]  # decimal representation of byte
         binary = bytes([byte_dec])  # convert decimal num (0, 256) to type bytes
         
-        with open(file, 'ab') as f:
-            f.write(binary)
+        f.write(binary)
 
 
 
@@ -272,18 +287,20 @@ def encode_png_debug(R, G, B):
 
 
 
-def encode_png(R, G, B, file='./data/tmp.txt'):
+def encode_png(R: np.ndarray, 
+               G: np.ndarray, 
+               B: np.ndarray, 
+               file: io.BufferedWriter) -> None:
     
     is_run = False
 
     n = len(R)
     
     hash_array = [None for i in range(64)]
-    f = open(file, 'w')  # create empty file (or replace existing)
-    f.close()
+    
     run_length = 0
 
-    for i in range(n):
+    for i in tqdm(range(n)):
         cur_pixel = Pixel(R[i], G[i], B[i])
         
         if i == 0:
@@ -380,7 +397,12 @@ def test_encode():
 
     _, R, G, B = read_png(f'./png_images/{filename}')
     
-    encode_png(R, G, B)
+    out_filename = './data/tmp.txt'
+    file = open(out_filename, 'w')  # create empty file (or replace existing)
+    file.close()
+    
+    with open(out_filename, 'ab') as file:
+        encode_png(R, G, B, file)
     
 
 

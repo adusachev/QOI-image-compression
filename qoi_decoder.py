@@ -7,6 +7,10 @@ from main import read_png
 
 
 
+
+
+
+
 def decode_debug(encoded_img, width=None, height=None):
     
     n = width * height

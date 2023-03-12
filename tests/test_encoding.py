@@ -18,12 +18,11 @@ class TestEncodeChunk(unittest.TestCase):
                         f"Should be 11001010, but get {byte}")
         
         # write to file
-        file = './data/tmp.txt'
-        f = open(file, 'w')  # create temporary empty file (or replace existing)
-        f.close()
+        filename = './data/tmp.txt'
         
-        write_chunk(chunk, file)
-        file_size = os.path.getsize(file)
+        with open(filename, 'wb') as file:
+            write_chunk(chunk, file)
+        file_size = os.path.getsize(filename)
         self.assertEqual(file_size, 1, "File size should be 1 byte")
         
         
@@ -38,12 +37,11 @@ class TestEncodeChunk(unittest.TestCase):
                         f"Should be 01111001, but get {byte}")
         
         # write to file
-        file = './data/tmp.txt'
-        f = open(file, 'w')  # create temporary empty file (or replace existing)
-        f.close()
+        filename = './data/tmp.txt'
         
-        write_chunk(chunk, file)
-        file_size = os.path.getsize(file)
+        with open(filename, 'wb') as file:
+            write_chunk(chunk, file)
+        file_size = os.path.getsize(filename)
         self.assertEqual(file_size, 1, "File size should be 1 byte")
         
         
@@ -62,12 +60,11 @@ class TestEncodeChunk(unittest.TestCase):
                         f"Should be 11111100, but get {byte2}")
         
         # write to file
-        file = './data/tmp.txt'
-        f = open(file, 'w')  # create temporary empty file (or replace existing)
-        f.close()
+        filename = './data/tmp.txt'
         
-        write_chunk(chunk, file)
-        file_size = os.path.getsize(file)
+        with open(filename, 'wb') as file:
+            write_chunk(chunk, file)
+        file_size = os.path.getsize(filename)
         self.assertEqual(file_size, 2, "File size should be 2 bytes")
         
         
@@ -95,12 +92,11 @@ class TestEncodeChunk(unittest.TestCase):
                         f"Should be 10010011, but get {byte_B}")
         
         # write to file
-        file = './data/tmp.txt'
-        f = open(file, 'w')  # create temporary empty file (or replace existing)
-        f.close()
+        filename = './data/tmp.txt'
         
-        write_chunk(chunk, file)
-        file_size = os.path.getsize(file)
+        with open(filename, 'wb') as file:
+            write_chunk(chunk, file)
+        file_size = os.path.getsize(filename)
         self.assertEqual(file_size, 4, "File size should be 4 bytes")
         
         
