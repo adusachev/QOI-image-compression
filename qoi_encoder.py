@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import cv2 as cv
 from main import read_png
 from termcolor import colored
+import os
+import pickle
+import pathlib
 
 
 
@@ -121,11 +124,7 @@ def encode_diff_med(dr: int, dg: int, db: int) -> list:
     return chunk
     
     
-def hash(r: int, g: int, b: int) -> int:
-    """
-    Hash function for QOI_INDEX
-    """
-    return (r * 3 + g * 5 + b * 7) % 64
+
     
     
 def encode_index(hash_index: int) -> list:
@@ -182,14 +181,31 @@ def write_chunk(chunk: list, file: str) -> None:
 
 
 
+class Image:
+    pass
+
+
+
+
+class Pixel:
+    
+    def __init__(self, r: int, g: int, b: int):
+        self.r = r
+        self.g = g
+        self.b = b
+        
+    def __eq__(self, other):
+        return (self.r == other.r) and (self.g == other.g) and (self.b == other.b)
+        
+    def hash_value(self) -> int:
+        """Hash function for QOI_INDEX"""
+        return (self.r * 3 + self.g * 5 + self.b * 7) % 64
+
+
 
 def encode_png_debug(R, G, B):
     
     QOI_RUN = False
-    QOI_DIFF_SMALL = False
-    QOI_DIFF_MED = False
-    QOI_INDEX = False
-    QOI_RGB = False
 
     n = len(R)
     
@@ -203,12 +219,12 @@ def encode_png_debug(R, G, B):
     run_length = 0
 
     for i in range(n):
-        cur_pixel = [ R[i], G[i], B[i] ]
+        cur_pixel = Pixel(R[i], G[i], B[i])
         
         if i == 0:
-            prev_pixel = [0, 0, 255]
+            prev_pixel = Pixel(0, 0, 255)
         else:
-            prev_pixel = [ R[i-1], G[i-1], B[i-1] ]
+            prev_pixel = Pixel( R[i-1], G[i-1], B[i-1] )
         
         if cur_pixel == prev_pixel:
             QOI_RUN = True
@@ -221,19 +237,19 @@ def encode_png_debug(R, G, B):
             QOI_RUN = False
         
         
-        dr = R[i] - R[i-1]
-        dg = G[i] - G[i-1]
-        db = B[i] - B[i-1]
-        # print(dr, dg, db)
+        dr = cur_pixel.r - prev_pixel.r
+        dg = cur_pixel.g - prev_pixel.g
+        db = cur_pixel.b - prev_pixel.b
         
-        hash_index = hash(R[i], G[i], B[i])
+        hash_index = cur_pixel.hash_value()
         
-        if hash_array[hash_index] == cur_pixel:
+        if hash_array[hash_index] is None:
+            hash_array[hash_index] = cur_pixel
+            
+        elif hash_array[hash_index] == cur_pixel:
             index_elem = {'QOI_INDEX': hash_index}
             encoded_img.append(index_elem)
             continue
-        elif hash_array[hash_index] is None:
-            hash_array[hash_index] = cur_pixel
                     
         # (!) более сильное условие, чем последующее (его проверка должна илти первой)
         if (-2 <= dr <= 1) and (-2 <= dg <= 1) and (-2 <= db <= 1):
@@ -266,12 +282,15 @@ def encode_png_debug(R, G, B):
 
 
 if __name__ == '__main__':
-    _, R, G, B = read_png('./png_images/R_video.png')
+    
+    filename = 'R_video.png'
+    # filename = 'pixel_diff.png'
+    _, R, G, B = read_png(f'./png_images/{filename}')
     
     encoded_img = encode_png_debug(R, G, B)
     
     
-    print('------------------------')
+    # print('------------------------')
     tag_colors = {'QOI_RUN': 'white', 
                   'QOI_DIFF_SMALL': 'light_green', 
                   'QOI_DIFF_MED': 'green', 'QOI_INDEX': 'light_yellow',
@@ -281,4 +300,10 @@ if __name__ == '__main__':
         tag = list(elem.keys())[0]
         color = tag_colors[tag]
         print(colored(f'{elem}', color))
+    
+    path_to_pickle_files = './data/'
+    path_to_object = os.path.join(path_to_pickle_files, pathlib.Path(filename).stem) 
+    file = open(path_to_object, 'wb')
+    pickle.dump(encoded_img, file)
+    file.close()
     
