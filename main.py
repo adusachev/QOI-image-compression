@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2 as cv
 
-from qoi_encoder import *
+# from qoi_encoder import *
 
 
 
