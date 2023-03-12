@@ -131,8 +131,8 @@ def encode_index(hash_index: int) -> list:
     """
     Encode QOI_INDEX chunk
 
-    :param run_length: run-length repeating the previous pixel
-    :return: list of bytes encoding QOI_RUN chunk (here list of one byte, byte is np.array of length 8)
+    :param hash_index: ....
+    :return: list of bytes encoding QOI_INDEX chunk (here list of one byte, byte is np.array of length 8)
     """
     byte = np.copy(QOI_INDEX)
 
@@ -210,12 +210,7 @@ def encode_png_debug(R, G, B):
     n = len(R)
     
     hash_array = [None for i in range(64)]
-
     encoded_img = []
-    # rgb_elem = {'QOI_RGB': [R[0], G[0], B[0]]}
-    # hash_index = hash(R[0], G[0], B[0])
-    # encoded_img.append(rgb_elem)
-
     run_length = 0
 
     for i in range(n):
@@ -251,7 +246,6 @@ def encode_png_debug(R, G, B):
             encoded_img.append(index_elem)
             continue
                     
-        # (!) более сильное условие, чем последующее (его проверка должна илти первой)
         if (-2 <= dr <= 1) and (-2 <= dg <= 1) and (-2 <= db <= 1):
             small_diff_elem = {'QOI_DIFF_SMALL': [dr, dg, db]}
             encoded_img.append(small_diff_elem)
@@ -283,8 +277,10 @@ def encode_png_debug(R, G, B):
 
 if __name__ == '__main__':
     
-    filename = 'R_video.png'
+    # filename = 'R_video.png'
     # filename = 'pixel_diff.png'
+    # filename = '28_pixels.png'
+    filename = 'doge.png'
     _, R, G, B = read_png(f'./png_images/{filename}')
     
     encoded_img = encode_png_debug(R, G, B)
@@ -299,7 +295,7 @@ if __name__ == '__main__':
     for elem in encoded_img:
         tag = list(elem.keys())[0]
         color = tag_colors[tag]
-        print(colored(f'{elem}', color))
+        print(colored(f'{elem}', color), ',', sep='')
     
     path_to_pickle_files = './data/'
     path_to_object = os.path.join(path_to_pickle_files, pathlib.Path(filename).stem) 
