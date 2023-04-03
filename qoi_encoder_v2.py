@@ -188,6 +188,7 @@ class Pixel:
     def hash_value(self) -> int:
         """Hash function for QOI_INDEX"""
         return (self.r * 3 + self.g * 5 + self.b * 7) % 64
+        # return (self.r * 3 + self.g * 5 + self.b * 7 + 255 * 11) % 64  # to compare
 
 
 
@@ -289,11 +290,7 @@ def encode_png(R: list,
             run_length = 0
             is_run = False
         
-        
-        dr = cur_pixel.r - prev_pixel.r
-        dg = cur_pixel.g - prev_pixel.g
-        db = cur_pixel.b - prev_pixel.b
-        
+               
         hash_index = cur_pixel.hash_value()
         
         if hash_array[hash_index] is None:
@@ -303,6 +300,12 @@ def encode_png(R: list,
             index_chunk = encode_index(hash_index)
             write_chunk(index_chunk, file)
             continue
+        else:
+            hash_array[hash_index] = cur_pixel  # update hash_index array 
+            
+        dr = cur_pixel.r - prev_pixel.r
+        dg = cur_pixel.g - prev_pixel.g
+        db = cur_pixel.b - prev_pixel.b
                     
         if (-2 <= dr <= 1) and (-2 <= dg <= 1) and (-2 <= db <= 1):
             diff_small_chunk = encode_diff_small(dr, dg, db)
@@ -363,10 +366,10 @@ def test_encode_debug():
     
     
 def test_encode():
-    # filename = 'R_video.png'
+    filename = 'R_video.png'
     # filename = 'pixel_diff.png'
     # filename = '28_pixels.png'
-    filename = 'doge.png'
+    # filename = 'doge.png'
     
     # output = f'./qoi_images/{pathlib.Path(filename).stem}.qoi'
 
