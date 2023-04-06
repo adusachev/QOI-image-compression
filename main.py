@@ -40,28 +40,27 @@ def read_png(path_to_png, draw_img=False, draw_flatten_img=False):
         plt.xticks([])
         plt.yticks([])
         
-    # convert np.array with np.int64 elems to list with int elems (to correct work of n.to_bytes())
-    R_flat = list(R_flat)
-    G_flat = list(G_flat)
-    B_flat = list(B_flat)
-    for i in range(len(R_flat)):
-        R_flat[i] = int(R_flat[i])
-        G_flat[i] = int(G_flat[i])
-        B_flat[i] = int(B_flat[i])
+    # convert np.array with np.int64 elems to list with int elems (for correct work of n.to_bytes())
+    R_flat = R_flat.tolist()
+    G_flat = G_flat.tolist()
+    B_flat = B_flat.tolist()  
+    # R_flat = list(R_flat)
+    # G_flat = list(G_flat)
+    # B_flat = list(B_flat)
+    # for i in range(len(R_flat)):
+    #     R_flat[i] = int(R_flat[i])
+    #     G_flat[i] = int(G_flat[i])
+    #     B_flat[i] = int(B_flat[i])
                 
     return img, R_flat, G_flat, B_flat
 
 
 
 
-def main():
-    path = './png_images/R_video.png'
-    _, R, G, B = read_png(path)
-    
-    output_path = './qoi_images/R_video.qoi'
-    encode(R, G, B, output_path)
 
 
 
 if __name__ == '__main__':
-    main()
+    img, R_flat, G_flat, B_flat = read_png('./png_images/huge_6k.png')
+    
+    

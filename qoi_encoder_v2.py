@@ -8,6 +8,7 @@ import pickle
 import pathlib
 from tqdm import tqdm
 import io
+import time
 
 
 QOI_RUN = 0b11000000
@@ -48,10 +49,11 @@ def encode_run(run_length: int) -> list:
     """
     Encode QOI_RUN chunk
 
-    :param run_length: run-length repeating the previous pixel (0-63)
+    :param run_length: run-length repeating the previous pixel (1-62)
     :return: list of bytes encoding QOI_RUN chunk (here list of one byte, byte is int)
     """
     byte = QOI_RUN
+    run_length -= 1  # run-length is stored with a bias of -1 (i.e. values are 0-61)
     byte = encode_byte_part(value=run_length, bits_num=6, right_offset=0, byte=byte)
     chunk = [byte]
     
@@ -272,8 +274,8 @@ def encode_png(R: list,
     
     hash_array = [None for i in range(64)]
 
-    for i in tqdm(range(n)):
-        cur_pixel = Pixel(R[i], G[i], B[i])
+    for i in range(n):
+        cur_pixel = Pixel(R[i], G[i], B[i])        
         
         if i == 0:
             prev_pixel = Pixel(0, 0, 255)
@@ -283,6 +285,11 @@ def encode_png(R: list,
         if cur_pixel == prev_pixel:
             is_run = True
             run_length += 1
+            if run_length == 62:
+                run_chunk = encode_run(run_length)
+                write_chunk(run_chunk, file)
+                run_length = 0
+                is_run = False        
             continue
         elif is_run:
             run_chunk = encode_run(run_length)
@@ -366,10 +373,12 @@ def test_encode_debug():
     
     
 def test_encode():
-    filename = 'R_video.png'
+    filename = 'long_run.png'
+    # filename = 'R_video.png'
     # filename = 'pixel_diff.png'
     # filename = '28_pixels.png'
     # filename = 'doge.png'
+    # filename = 'huge_6k.png'
     
     # output = f'./qoi_images/{pathlib.Path(filename).stem}.qoi'
 
@@ -382,7 +391,11 @@ def test_encode():
     file.close()
     
     with open(out_filename, 'ab') as file:
+        start_time = time.time()
         encode_png(R, G, B, file)
+        end_time = time.time()
+
+    print(f"Time elapsed: {end_time - start_time} sec")
     
 
 
