@@ -5,6 +5,7 @@ import pickle
 from qoi_encoder import Pixel
 from main import read_png
 from typing import Tuple
+import time
 
 
 
@@ -31,6 +32,9 @@ def decode_diff_small(byte: int) -> Tuple[int, int, int]:
     dr = decode_byte_part(byte, right_offset=4, bits_num=2)
     dg = decode_byte_part(byte, right_offset=2, bits_num=2)
     db = decode_byte_part(byte, right_offset=0, bits_num=2)
+    dr -= 2  # bias
+    dg -= 2
+    db -= 2
     
     return dr, dg, db
 
@@ -42,7 +46,9 @@ def decode_diff_med(byte1: int, byte2: int) -> Tuple[int, int, int]:
     dg = decode_byte_part(byte1, right_offset=0, bits_num=6)
     dr_dg = decode_byte_part(byte2, right_offset=4, bits_num=4)
     db_dg = decode_byte_part(byte2, right_offset=0, bits_num=4)
-    
+    dg -= 32  # bias
+    dr_dg -= 8
+    db_dg -= 8
     dr = dr_dg + dg
     db = db_dg + dg
     
@@ -89,7 +95,7 @@ def decode(filename, width, height):
         elif tag == 0b11:
             tag_name = 'run'
             run_length = decode_byte_part(byte, right_offset=0, bits_num=6)
-            
+            run_length += 1  # bias
             for i in range(run_length):
                 R_decoded[pixel_counter + i] = prev_pixel.r
                 G_decoded[pixel_counter + i] = prev_pixel.g
@@ -115,7 +121,7 @@ def decode(filename, width, height):
             
         elif tag == 0b10:
             tag_name = 'diff_med'
-            next_byte = qoi_bytes[i+1]
+            next_byte = qoi_bytes[byte_counter+1]
             dr, dg, db = decode_diff_med(byte, next_byte)
             cur_pixel = Pixel(prev_pixel.r + dr, prev_pixel.g + dg, prev_pixel.b + db)
             byte_counter += 2
@@ -239,26 +245,27 @@ def test_decode_debug():
 
 
 def test_decode():
-    png_filename = './png_images/long_run.png'
-    # png_filename = 'R_video'
-    # filename = '28_pixels'
-    # filename = 'pixel_diff'
-    # filename = 'doge'
+    # png_filename = './png_images/long_run.png'
+    # png_filename = './png_images/R_video.png'
+    # png_filename = './png_images/28_pixels.png'
+    # png_filename = './png_images/doge.png'
+    # png_filename = './png_images/huge_6k.png'
+    png_filename = './png_images/pixel_diff.png'    
     
     qoi_filename = './data/tmp_v2.txt'
     
     img, R, G, B = read_png(png_filename)
     width, height = img.shape[0], img.shape[1]
     
-    
+    start_time = time.time()
     R_decoded, G_decoded, B_decoded = decode(qoi_filename, width, height)
-
+    end_time = time.time()
 
     print(np.all(R_decoded == R), np.where(R_decoded != R)[0])
     print(np.all(G_decoded == G), np.where(G_decoded != G)[0])
     print(np.all(B_decoded == B), np.where(B_decoded != B)[0])
 
-    
+    print(f"Time elapsed: {end_time - start_time} sec")
 
 
 if __name__ == '__main__':
