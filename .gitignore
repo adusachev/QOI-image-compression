@@ -8,3 +8,4 @@ __pycache__/
 ./data/*
 *tmp*
 png_images/long_run.png
+experiments.ipynb
