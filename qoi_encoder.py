@@ -8,44 +8,39 @@ import pickle
 import pathlib
 from tqdm import tqdm
 import io
+import time
 
 
-
-# QOI_RUN = 0xc0  # 11xxxxxx
-# QOI_DIFF_SMALL = 0x40  # 01xxxxxx
-# QOI_DIFF_MED = 0x80  # 10xxxxxx
-# QOI_RGB = 0xfe # 11111110
-# EMPTY_BYTE = 0x0  # xxxxxxxx
-QOI_RUN = np.array([1, 1, 0, 0, 0, 0, 0, 0])
-QOI_DIFF_SMALL = np.array([0, 1, 0, 0, 0, 0, 0, 0])
-QOI_DIFF_MED = np.array([1, 0, 0, 0, 0, 0, 0, 0])
-QOI_INDEX = np.array([0, 0, 0, 0, 0, 0, 0, 0])
-QOI_RGB = np.array([1, 1, 1, 1, 1, 1, 1, 0])
-EMPTY_BYTE = np.array([0, 0, 0, 0, 0, 0, 0, 0])
+QOI_RUN = 0b11000000
+QOI_DIFF_SMALL = 0b01000000
+QOI_DIFF_MED = 0b10000000
+QOI_INDEX = 0b00000000
+QOI_RGB = 0b11111110
+EMPTY_BYTE = 0b00000000
 
 
 
 
-def encode_byte_part(value: int, bits_num: int, offset: int, byte: np.array) -> np.array:
+def encode_byte_part(value: int, bits_num: int, right_offset: int, byte: int) -> int:
     """
     Write value to a part of byte
 
     :param value: decimal value to encode (0-255)
     :param bits_num: number of bits, needed to encode value (1-8)
-    :param offset: bit offset (e.g. the binary value 101 written in byte 00000000 with offset=2 will give 00101000)  
-    :param byte: the byte in which our value will be written (byte is np.array of length 8)
+    :param right_offset: bit offset 
+                        (e.g. the binary value 101 written in byte 00000000 with right_offset=2 will give 00010100) 
+    :param byte: the byte in which our value will be written
     :return: byte with written value
     """
     assert 0 <= value <= (2**bits_num), f"{value} is too large to be written in {bits_num} bits"
-    assert (offset + bits_num) <= 8, \
-        f"{bits_num} bits with offset {offset} can't be paced in single byte"
+    assert (right_offset + bits_num) <= 8, \
+        f"{bits_num} bits with right offset {right_offset} can't be placed in single byte"
     
-    value_encoded = [int(i) for i in f"{{0:0{bits_num}b}}".format(value)]
-    assert len(value_encoded) == bits_num
-    
-    byte[offset : offset + bits_num] = value_encoded
+    value_encoded = value << right_offset  # shift "value" left (regarding to 0b0) by "right_offset" bits
+    byte += value_encoded
     
     return byte
+
 
 
 
@@ -54,16 +49,16 @@ def encode_run(run_length: int) -> list:
     """
     Encode QOI_RUN chunk
 
-    :param run_length: run-length repeating the previous pixel
-    :return: list of bytes encoding QOI_RUN chunk (here list of one byte, byte is np.array of length 8)
+    :param run_length: run-length repeating the previous pixel (1-62)
+    :return: list of bytes encoding QOI_RUN chunk (here list of one byte, byte is int)
     """
-    # byte = np.unpackbits(np.array([QOI_RUN], dtype=np.uint8))
-    byte = np.copy(QOI_RUN)
-
-    byte = encode_byte_part(value=run_length, bits_num=6, offset=2, byte=byte)
+    byte = QOI_RUN
+    run_length -= 1  # run-length is stored with a bias of -1 (i.e. values are 0-61)
+    byte = encode_byte_part(value=run_length, bits_num=6, right_offset=0, byte=byte)
     chunk = [byte]
     
     return chunk
+
 
 
 
@@ -74,18 +69,17 @@ def encode_diff_small(dr: int, dg: int, db: int) -> list:
     :param dr: red channel difference from the previous pixel
     :param dg: green channel difference from the previous pixel
     :param db: blue channel difference from the previous pixel
-    :return: list of bytes encoding QOI_DIFF_SMALL chunk (here list of one byte, byte is np.array of length 8)
+    :return: list of bytes encoding QOI_DIFF_SMALL chunk
     """
     assert (-2 <= dr <= 1) and (-2 <= dg <= 1) and (-2 <= db <= 1), \
         f"one of the values dr={dr}, dg={dg}, db={db} does not lie in the range [-2, 1]"
         
-    # byte = np.unpackbits(np.array([QOI_DIFF_SMALL], dtype=np.uint8))
-    byte = np.copy(QOI_DIFF_SMALL)
-    offset = 2
+    byte = QOI_DIFF_SMALL
+    right_offset = 4
     for d_channel in [dr, dg, db]:
         d_channel += 2  # values are stored with a bias of 2
-        byte = encode_byte_part(value=d_channel, bits_num=2, offset=offset, byte=byte)
-        offset += 2
+        byte = encode_byte_part(value=d_channel, bits_num=2, right_offset=right_offset, byte=byte)
+        right_offset -= 2
 
     chunk = [byte]
     return chunk
@@ -99,7 +93,7 @@ def encode_diff_med(dr: int, dg: int, db: int) -> list:
     :param dr: red channel difference from the previous pixel
     :param dg: green channel difference from the previous pixel
     :param db: blue channel difference from the previous pixel
-    :return: list of bytes encoding QOI_DIFF_MED chunk (here list of two bytes, each byte is np.array of length 8)
+    :return: list of bytes encoding QOI_DIFF_MED chunk (here list of two ints)
     """
     dr_dg = dr - dg
     db_dg = db - dg
@@ -108,19 +102,17 @@ def encode_diff_med(dr: int, dg: int, db: int) -> list:
         f"values (dr-dg)={dr_dg}, (db-dg)={db_dg} does not lie in the range [-8, 7]"
     
     # Values are stored with a bias of 32 for the green channel 
-    # and a bias of 8 for the red and blue channel:
+    #  and a bias of 8 for the red and blue channel:
     dg += 32
     dr_dg += 8
     db_dg += 8
     
-    # byte1 = np.unpackbits(np.array([QOI_DIFF_MED], dtype=np.uint8))
-    byte1 = np.copy(QOI_DIFF_MED)
-    byte1 = encode_byte_part(value=dg, bits_num=6, offset=2, byte=byte1)
+    byte1 = QOI_DIFF_MED
+    byte1 = encode_byte_part(value=dg, bits_num=6, right_offset=0, byte=byte1)
     
-    # byte2 = np.unpackbits(np.array([EMPTY_BYTE], dtype=np.uint8))
-    byte2 = np.copy(EMPTY_BYTE)
-    byte2 = encode_byte_part(value=dr_dg, bits_num=4, offset=0, byte=byte2)
-    byte2 = encode_byte_part(value=db_dg, bits_num=4, offset=4, byte=byte2)
+    byte2 = EMPTY_BYTE
+    byte2 = encode_byte_part(value=dr_dg, bits_num=4, right_offset=4, byte=byte2)
+    byte2 = encode_byte_part(value=db_dg, bits_num=4, right_offset=0, byte=byte2)
 
     chunk = [byte1, byte2]    
     return chunk
@@ -134,11 +126,11 @@ def encode_index(hash_index: int) -> list:
     Encode QOI_INDEX chunk
 
     :param hash_index: ....
-    :return: list of bytes encoding QOI_INDEX chunk (here list of one byte, byte is np.array of length 8)
+    :return: list of bytes encoding QOI_INDEX chunk (here list of one int)
     """
-    byte = np.copy(QOI_INDEX)
+    byte = QOI_INDEX
 
-    byte = encode_byte_part(value=hash_index, bits_num=6, offset=2, byte=byte)
+    byte = encode_byte_part(value=hash_index, bits_num=6, right_offset=0, byte=byte)
     chunk = [byte]
     
     return chunk
@@ -151,48 +143,31 @@ def encode_rgb(R: int, G: int, B: int) -> list:
     :param R: 8-bit red channel value
     :param G: 8-bit green channel value
     :param B: 8-bit blue channel value
-    :return: list of bytes encoding QOI_RGB chunk (here list of four bytes, each byte is np.array of length 8)
+    :return: list of bytes encoding QOI_RGB chunk (here list of four ints)
     """
-    # byte1 = np.unpackbits(np.array([QOI_RGB], dtype=np.uint8))
-    byte1 = np.copy(QOI_RGB)
+    byte1 = QOI_RGB
     chunk = [byte1]
 
     for channel in [R, G, B]:
-        # byte = np.unpackbits(np.array([EMPTY_BYTE], dtype=np.uint8))
-        byte = np.copy(EMPTY_BYTE)
-        byte = encode_byte_part(value=channel, bits_num=8, offset=0, byte=byte)
+        byte = EMPTY_BYTE
+        byte = encode_byte_part(value=channel, bits_num=8, right_offset=0, byte=byte)
         chunk.append(byte)
     
     return chunk
 
     
 
-# def write_chunk(chunk: list, file: str) -> None:
-#     """
-#     Writes bytes from single chunk to file
-
-#     :param chunk: list of bytes (each byte is np.array of length 8)
-#     :param file: path to file
-#     """
-#     for byte in chunk:
-#         byte_dec = np.packbits(byte)[0]  # decimal representation of byte
-#         binary = bytes([byte_dec])  # convert decimal num (0, 256) to type bytes
-        
-#         with open(file, 'ab') as f:
-#             f.write(binary)
 
 def write_chunk(chunk: list, f: io.BufferedWriter) -> None:
     """
     Writes bytes from single chunk to file
 
-    :param chunk: list of bytes (each byte is np.array of length 8)
+    :param chunk: list of bytes (each byte is int)
     :param file: path to file
     """
-    for byte in chunk:
-        byte_dec = np.packbits(byte)[0]  # decimal representation of byte
-        binary = bytes([byte_dec])  # convert decimal num (0, 256) to type bytes
-        
-        f.write(binary)
+    for byte_val in chunk:
+        val_binary = byte_val.to_bytes(length=1, byteorder='big')
+        f.write(val_binary)
 
 
 
@@ -215,18 +190,19 @@ class Pixel:
     def hash_value(self) -> int:
         """Hash function for QOI_INDEX"""
         return (self.r * 3 + self.g * 5 + self.b * 7) % 64
+        # return (self.r * 3 + self.g * 5 + self.b * 7 + 255 * 11) % 64  # to compare
 
 
 
 def encode_png_debug(R, G, B):
     
     is_run = False
+    run_length = 0
 
     n = len(R)
     
     hash_array = [None for i in range(64)]
     encoded_img = []
-    run_length = 0
 
     for i in range(n):
         cur_pixel = Pixel(R[i], G[i], B[i])
@@ -275,7 +251,6 @@ def encode_png_debug(R, G, B):
         rgb_elem = {'QOI_RGB': [R[i], G[i], B[i]]}
         encoded_img.append(rgb_elem)
         
-
     # last run processing
     if is_run:
         run_elem = {'QOI_RUN': run_length}
@@ -287,21 +262,20 @@ def encode_png_debug(R, G, B):
 
 
 
-def encode_png(R: np.ndarray, 
-               G: np.ndarray, 
-               B: np.ndarray, 
+def encode_png(R: list, 
+               G: list, 
+               B: list, 
                file: io.BufferedWriter) -> None:
     
     is_run = False
-
+    run_length = 0
+    
     n = len(R)
     
     hash_array = [None for i in range(64)]
-    
-    run_length = 0
 
-    for i in tqdm(range(n)):
-        cur_pixel = Pixel(R[i], G[i], B[i])
+    for i in range(n):
+        cur_pixel = Pixel(R[i], G[i], B[i])        
         
         if i == 0:
             prev_pixel = Pixel(0, 0, 255)
@@ -311,6 +285,11 @@ def encode_png(R: np.ndarray,
         if cur_pixel == prev_pixel:
             is_run = True
             run_length += 1
+            if run_length == 62:
+                run_chunk = encode_run(run_length)
+                write_chunk(run_chunk, file)
+                run_length = 0
+                is_run = False        
             continue
         elif is_run:
             run_chunk = encode_run(run_length)
@@ -318,11 +297,7 @@ def encode_png(R: np.ndarray,
             run_length = 0
             is_run = False
         
-        
-        dr = cur_pixel.r - prev_pixel.r
-        dg = cur_pixel.g - prev_pixel.g
-        db = cur_pixel.b - prev_pixel.b
-        
+               
         hash_index = cur_pixel.hash_value()
         
         if hash_array[hash_index] is None:
@@ -332,6 +307,12 @@ def encode_png(R: np.ndarray,
             index_chunk = encode_index(hash_index)
             write_chunk(index_chunk, file)
             continue
+        else:
+            hash_array[hash_index] = cur_pixel  # update hash_index array 
+            
+        dr = cur_pixel.r - prev_pixel.r
+        dg = cur_pixel.g - prev_pixel.g
+        db = cur_pixel.b - prev_pixel.b
                     
         if (-2 <= dr <= 1) and (-2 <= dg <= 1) and (-2 <= db <= 1):
             diff_small_chunk = encode_diff_small(dr, dg, db)
@@ -356,11 +337,15 @@ def encode_png(R: np.ndarray,
 
 
 def test_encode_debug():
-    # filename = 'R_video.png'
+    filename = 'R_video.png'
     # filename = 'pixel_diff.png'
     # filename = '28_pixels.png'
-    filename = 'doge.png'
+    # filename = 'doge.png'
     _, R, G, B = read_png(f'./png_images/{filename}')
+    
+    R = list(R)
+    G = list(G)
+    B = list(B)
     
     encoded_img = encode_png_debug(R, G, B)
     
@@ -388,21 +373,29 @@ def test_encode_debug():
     
     
 def test_encode():
+    filename = 'long_run.png'
     # filename = 'R_video.png'
-    filename = 'pixel_diff.png'
+    # filename = 'pixel_diff.png'
     # filename = '28_pixels.png'
     # filename = 'doge.png'
+    # filename = 'huge_6k.png'
     
     # output = f'./qoi_images/{pathlib.Path(filename).stem}.qoi'
 
     _, R, G, B = read_png(f'./png_images/{filename}')
     
-    out_filename = './data/tmp.txt'
+    assert isinstance(R[1], int), f'{type(R[1])}'
+    
+    out_filename = './data/tmp_v2.txt'
     file = open(out_filename, 'w')  # create empty file (or replace existing)
     file.close()
     
     with open(out_filename, 'ab') as file:
+        start_time = time.time()
         encode_png(R, G, B, file)
+        end_time = time.time()
+
+    print(f"Time elapsed: {end_time - start_time} sec")
     
 
 
