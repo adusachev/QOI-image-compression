@@ -55,7 +55,7 @@ def decode(filename, width, height):
     Algorithm of QOI decoder
     """
     
-    with open('./data/tmp_v2.txt', 'rb') as f:
+    with open(filename, 'rb') as f:
         qoi_bytes = f.read()
     
     n = width * height
@@ -65,10 +65,12 @@ def decode(filename, width, height):
     B_decoded = np.zeros(n)
     hash_array = [None for i in range(64)]
     
-    m = len(encoded_img)
+    m = len(qoi_bytes)
     
     pixel_counter = 0  # flatten image counter
     byte_counter = 0  # qoi bytes counter
+    
+    cur_pixel = Pixel(0, 0, 0)
     
     while byte_counter != m:
         
@@ -93,6 +95,7 @@ def decode(filename, width, height):
                 G_decoded[pixel_counter + i] = prev_pixel.g
                 B_decoded[pixel_counter + i] = prev_pixel.b
             pixel_counter += run_length
+            byte_counter += 1
             continue
             
         elif tag == 0b00:
@@ -127,6 +130,8 @@ def decode(filename, width, height):
         G_decoded[pixel_counter] = cur_pixel.g
         B_decoded[pixel_counter] = cur_pixel.b
         pixel_counter += 1
+        
+    return R_decoded, G_decoded, B_decoded
             
     
     
@@ -206,9 +211,7 @@ def decode_debug(encoded_img, width=None, height=None):
     return R_decoded, G_decoded, B_decoded
 
 
-
-if __name__ == '__main__':
-    
+def test_decode_debug():
     filename = 'R_video'
     # filename = '28_pixels'
     # filename = 'pixel_diff'
@@ -233,6 +236,34 @@ if __name__ == '__main__':
     assert np.all(R_decoded == R), 'R cahnnel wrong'
     assert np.all(G_decoded == G), 'G cahnnel wrong'
     assert np.all(B_decoded == B), 'B cahnnel wrong'
+
+
+def test_decode():
+    png_filename = './png_images/long_run.png'
+    # png_filename = 'R_video'
+    # filename = '28_pixels'
+    # filename = 'pixel_diff'
+    # filename = 'doge'
+    
+    qoi_filename = './data/tmp_v2.txt'
+    
+    img, R, G, B = read_png(png_filename)
+    width, height = img.shape[0], img.shape[1]
+    
+    
+    R_decoded, G_decoded, B_decoded = decode(qoi_filename, width, height)
+
+
+    print(np.all(R_decoded == R), np.where(R_decoded != R)[0])
+    print(np.all(G_decoded == G), np.where(G_decoded != G)[0])
+    print(np.all(B_decoded == B), np.where(B_decoded != B)[0])
+
+    
+
+
+if __name__ == '__main__':
+    test_decode()
+    
     
         
 
