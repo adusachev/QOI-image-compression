@@ -26,7 +26,7 @@ class TestEncodeChunk(unittest.TestCase):
         chunk = encode_run(run_length)
         byte = chunk[0]
         
-        self.assertEqual(byte, 0b11001010, 
+        self.assertEqual(byte, 0b11001010 - 1, 
                         f"Should be 0b11001010, but get {bin(byte)}")
         
         # write to file

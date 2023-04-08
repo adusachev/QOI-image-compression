@@ -4,18 +4,8 @@ import os
 import pickle
 from qoi_encoder import Pixel
 from main import read_png
+from typing import Tuple
 
-
-def decode_byte_part_0(byte: int, part_length: int) -> int:
-    """
-    Return right part of byte of given length
-     (i.e. slice byte[ 8 - part_length: ])
-    """
-    res = byte >> part_length
-
-    res2 = res << part_length
-
-    return (byte - res2)
 
 
 def decode_byte_part(byte: int, right_offset: int, bits_num: int) -> int:
@@ -34,7 +24,7 @@ def decode_byte_part(byte: int, right_offset: int, bits_num: int) -> int:
 
 
 
-def decode_diff_small(byte: int) -> tuple(int):
+def decode_diff_small(byte: int) -> Tuple[int, int, int]:
     """
     Extract dr, dg, db from diff small byte
     """
@@ -45,7 +35,7 @@ def decode_diff_small(byte: int) -> tuple(int):
     return dr, dg, db
 
 
-def decode_diff_med(byte1: int, byte2: int) -> tuple(int):
+def decode_diff_med(byte1: int, byte2: int) -> Tuple[int, int, int]:
     """
     Extract dr, dg, db from diff med bytes
     """
