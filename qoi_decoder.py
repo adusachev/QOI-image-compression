@@ -3,7 +3,7 @@ from termcolor import colored
 import os
 import pickle
 from qoi_encoder import Pixel
-from main import read_png
+from read_png import read_png
 from typing import Tuple
 import time
 

@@ -1,7 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import cv2 as cv
-from main import read_png
+from read_png import read_png
 from termcolor import colored
 import os
 import pickle
@@ -208,7 +206,7 @@ def encode_png_debug(R, G, B):
         cur_pixel = Pixel(R[i], G[i], B[i])
         
         if i == 0:
-            prev_pixel = Pixel(0, 0, 255)
+            prev_pixel = Pixel(0, 0, 0)
         else:
             prev_pixel = Pixel( R[i-1], G[i-1], B[i-1] )
         
@@ -262,10 +260,10 @@ def encode_png_debug(R, G, B):
 
 
 
-def encode_png(R: list, 
-               G: list, 
-               B: list, 
-               file: io.BufferedWriter) -> None:
+def encode(R: list, 
+           G: list, 
+           B: list, 
+           file: io.BufferedWriter) -> None:
     
     is_run = False
     run_length = 0
@@ -392,7 +390,7 @@ def test_encode():
     
     with open(out_filename, 'ab') as file:
         start_time = time.time()
-        encode_png(R, G, B, file)
+        encode(R, G, B, file)
         end_time = time.time()
 
     print(f"Time elapsed: {end_time - start_time} sec")

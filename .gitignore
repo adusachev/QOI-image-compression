@@ -9,3 +9,6 @@ __pycache__/
 *tmp*
 png_images/long_run.png
 experiments.ipynb
+*.jpeg
+more_png_images/
+qoi_images/

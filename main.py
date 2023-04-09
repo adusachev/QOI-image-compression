@@ -1,66 +1,73 @@
+import os
+import time
+from pathlib import Path
 import numpy as np
-import matplotlib.pyplot as plt
-import cv2 as cv
 
-# from qoi_encoder import *
-
-
+from qoi_encoder import encode
+from qoi_decoder import decode
+from read_png import read_png
 
 
-def read_png(path_to_png, draw_img=False, draw_flatten_img=False):
-    """
-    Read .png image and return flatten array of each channel
-    Draw image and flatten image if required
+
+
+
+def run_encoder(png_filename, qoi_filename=None):
+    if qoi_filename is None:
+        name = Path(png_filename).stem
+        qoi_filename = f'./qoi_images/{name}.qoi'
     
-    :return: 1) img - original image, shape=(heigth, width, 3)
-             2) R_flat - flatten 1d array of R-cahnnel pixel values, shape=(heigth*width,)
-             3) G_flat, B_flat - analogically to R_flat
-    """
-    img = cv.imread(path_to_png)
-    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)  # BGR -> RGB
+    _, R, G, B = read_png(png_filename)
     
-    R = img[:, :, 0].astype(int)
-    G = img[:, :, 1].astype(int)
-    B = img[:, :, 2].astype(int)
-    R_flat = np.ravel(R)
-    G_flat = np.ravel(G)
-    B_flat = np.ravel(B)
+    # create empty qoi file (or replace existing)
+    file = open(qoi_filename, 'w')
+    file.close()
     
-    height, width = img.shape[0], img.shape[1]
-    if draw_img:
-        plt.imshow(img)
-        plt.title(f"Image {height}x{width}")
-        plt.xticks([])
-        plt.yticks([])
-    if draw_flatten_img:
-        plt.figure(figsize=(15, 4))
-        flatten_img = np.vstack((R_flat, G_flat, B_flat)).T.reshape((1, height*width, 3)) 
-        plt.imshow(flatten_img)
-        plt.title(f"Flatten image 1x{height * width}")
-        plt.xticks([])
-        plt.yticks([])
+    start_time = time.time()
+    with open(qoi_filename, 'ab') as file:
+        encode(R, G, B, file)
+    end_time = time.time()
+
+    print(f"Image encoded and saved as {qoi_filename}")
+    print(f"Time elapsed: {end_time - start_time} sec", '\n')
+    
+    
+    
+def run_decoder(qoi_filename, png_filename):
+    
+    orig_img, R, G, B = read_png(png_filename)
+    height, width = orig_img.shape[0], orig_img.shape[1]
+
+    start_time = time.time()
+    R_decoded, G_decoded, B_decoded = decode(qoi_filename, width, height)
+    end_time = time.time()
+
+    img_decoded = np.zeros((height, width, 3), dtype=int)
+    img_decoded[:, :, 0] = R_decoded.reshape((height, width))
+    img_decoded[:, :, 1] = G_decoded.reshape((height, width))
+    img_decoded[:, :, 2] = B_decoded.reshape((height, width))
+    
+    assert np.all(img_decoded == orig_img), \
+        f"Decoded qoi image {qoi_filename} is not equal to original png image {png_filename}"
         
-    # convert np.array with np.int64 elems to list with int elems (for correct work of n.to_bytes())
-    R_flat = R_flat.tolist()
-    G_flat = G_flat.tolist()
-    B_flat = B_flat.tolist()  
-    # R_flat = list(R_flat)
-    # G_flat = list(G_flat)
-    # B_flat = list(B_flat)
-    # for i in range(len(R_flat)):
-    #     R_flat[i] = int(R_flat[i])
-    #     G_flat[i] = int(G_flat[i])
-    #     B_flat[i] = int(B_flat[i])
-                
-    return img, R_flat, G_flat, B_flat
-
-
-
+    print("Decoded qoi image is equal to original png image:", np.all(img_decoded == orig_img))
+    print(f"Time elapsed: {end_time - start_time} sec")
 
 
 
 
 if __name__ == '__main__':
-    img, R_flat, G_flat, B_flat = read_png('./png_images/huge_6k.png')
+    
+    dir_with_png = './more_png_images'
+    for name in os.listdir(dir_with_png):
+        if Path(name).suffix == ".png":
+            png_filename = os.path.join(dir_with_png, name)
+    
+            name = Path(png_filename).stem
+            if name == "huge_6k":
+                continue
+            qoi_filename = f'./qoi_images/{name}.qoi'
+            run_encoder(png_filename, qoi_filename)
+            run_decoder(qoi_filename, png_filename)
+            print('-------------------------------------')
     
     
