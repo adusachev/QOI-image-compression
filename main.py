@@ -1,6 +1,7 @@
 import os
 import time
 from pathlib import Path
+import logging
 import numpy as np
 
 from qoi_encoder import encode
@@ -8,6 +9,14 @@ from qoi_decoder import decode
 from read_png import read_png
 
 
+logger = logging.getLogger(__name__)
+loglevel = "DEBUG"
+logger.setLevel(loglevel)
+handler = logging.StreamHandler()
+handler.setLevel(loglevel)
+format = '%(levelname)s - %(filename)s - %(funcName)s: %(message)s'
+handler.setFormatter(logging.Formatter(format))
+logger.addHandler(handler)
 
 
 
@@ -27,8 +36,8 @@ def run_encoder(png_filename, qoi_filename=None):
         encode(R, G, B, file)
     end_time = time.time()
 
-    print(f"Image encoded and saved as {qoi_filename}")
-    print(f"Time elapsed: {end_time - start_time} sec", '\n')
+    logger.debug(f"Image encoded and saved as {qoi_filename}")
+    logger.debug(f"Encoding time: {end_time - start_time} sec")
     
     
     
@@ -46,28 +55,31 @@ def run_decoder(qoi_filename, png_filename):
     img_decoded[:, :, 1] = G_decoded.reshape((height, width))
     img_decoded[:, :, 2] = B_decoded.reshape((height, width))
     
-    assert np.all(img_decoded == orig_img), \
-        f"Decoded qoi image {qoi_filename} is not equal to original png image {png_filename}"
         
-    print("Decoded qoi image is equal to original png image:", np.all(img_decoded == orig_img))
-    print(f"Time elapsed: {end_time - start_time} sec")
+    if np.all(img_decoded == orig_img):
+        logger.debug("Decoded qoi image is equal to original png image")
+    else:
+        logger.error(f"Decoding failed, qoi image {qoi_filename} is not equal to original png image {png_filename}")
+        logger.debug(f"Decoding failed at indexes {np.where(img_decoded != orig_img)[0]}")
+        raise Exception("Error in decoding algorithm, qoi image is not equal to original png image")
+    
+    logger.debug(f"Decoding time: {end_time - start_time} sec")
 
 
 
 
 if __name__ == '__main__':
     
-    dir_with_png = './more_png_images'
+    dir_with_png = './png_images'
     for name in os.listdir(dir_with_png):
         if Path(name).suffix == ".png":
             png_filename = os.path.join(dir_with_png, name)
     
             name = Path(png_filename).stem
-            if name == "huge_6k":
-                continue
             qoi_filename = f'./qoi_images/{name}.qoi'
+            logger.info(f"Process image {name}.png")            
             run_encoder(png_filename, qoi_filename)
             run_decoder(qoi_filename, png_filename)
-            print('-------------------------------------')
+            print('------------------------------------- \n')
     
     
