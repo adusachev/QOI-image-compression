@@ -6,7 +6,6 @@ import os
 
 class TestEncodeChunk(unittest.TestCase):
         
-        
     def test_encode_run(self):
         # encode
         run_length = 10
@@ -99,14 +98,9 @@ class TestEncodeChunk(unittest.TestCase):
         self.assertEqual(file_size, 4, "File size should be 4 bytes")
         
         
-        
-
 
 
 if __name__ == '__main__':
     unittest.main()
-    
-    
-    
     
     
