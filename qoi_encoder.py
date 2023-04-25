@@ -1,8 +1,6 @@
 import numpy as np
 from read_png import read_png
-from termcolor import colored
 import os
-import pickle
 import pathlib
 from tqdm import tqdm
 import io
@@ -192,72 +190,6 @@ class Pixel:
 
 
 
-def encode_png_debug(R, G, B):
-    
-    is_run = False
-    run_length = 0
-
-    n = len(R)
-    
-    hash_array = [None for i in range(64)]
-    encoded_img = []
-
-    for i in range(n):
-        cur_pixel = Pixel(R[i], G[i], B[i])
-        
-        if i == 0:
-            prev_pixel = Pixel(0, 0, 0)
-        else:
-            prev_pixel = Pixel( R[i-1], G[i-1], B[i-1] )
-        
-        if cur_pixel == prev_pixel:
-            is_run = True
-            run_length += 1
-            continue
-        elif is_run:
-            run_elem = {'QOI_RUN': run_length}
-            encoded_img.append(run_elem)
-            run_length = 0
-            is_run = False
-        
-        
-        dr = cur_pixel.r - prev_pixel.r
-        dg = cur_pixel.g - prev_pixel.g
-        db = cur_pixel.b - prev_pixel.b
-        
-        hash_index = cur_pixel.hash_value()
-        
-        if hash_array[hash_index] is None:
-            hash_array[hash_index] = cur_pixel
-            
-        elif hash_array[hash_index] == cur_pixel:
-            index_elem = {'QOI_INDEX': hash_index}
-            encoded_img.append(index_elem)
-            continue
-                    
-        if (-2 <= dr <= 1) and (-2 <= dg <= 1) and (-2 <= db <= 1):
-            small_diff_elem = {'QOI_DIFF_SMALL': [dr, dg, db]}
-            encoded_img.append(small_diff_elem)
-            continue
-        
-        if (-32 <= dg <= 31) and (-8 <= (dr-dg) <= 7) and (-8 <= (db-dg) <= 7):
-            med_diff_elem = {'QOI_DIFF_MED': [dg, (dr-dg), (db-dg)]}
-            encoded_img.append(med_diff_elem)
-            continue
-            
-        # else:
-        rgb_elem = {'QOI_RGB': [R[i], G[i], B[i]]}
-        encoded_img.append(rgb_elem)
-        
-    # last run processing
-    if is_run:
-        run_elem = {'QOI_RUN': run_length}
-        encoded_img.append(run_elem)
-        run_length = 0
-        is_run = False
-        
-    return encoded_img
-
 
 
 def encode(R: list, 
@@ -276,7 +208,7 @@ def encode(R: list,
         cur_pixel = Pixel(R[i], G[i], B[i])        
         
         if i == 0:
-            prev_pixel = Pixel(0, 0, 255)
+            prev_pixel = Pixel(0, 0, 0)
         else:
             prev_pixel = Pixel( R[i-1], G[i-1], B[i-1] )
         
@@ -332,38 +264,6 @@ def encode(R: list,
         run_length = 0
         is_run = False
         
-
-
-def test_encode_debug():
-    filename = 'R_video.png'
-    # filename = 'pixel_diff.png'
-    # filename = '28_pixels.png'
-    # filename = 'doge.png'
-    _, R, G, B = read_png(f'./png_images/{filename}')
-    
-    R = list(R)
-    G = list(G)
-    B = list(B)
-    
-    encoded_img = encode_png_debug(R, G, B)
-    
-    
-    # print('------------------------')
-    tag_colors = {'QOI_RUN': 'white', 
-                  'QOI_DIFF_SMALL': 'light_green', 
-                  'QOI_DIFF_MED': 'green', 'QOI_INDEX': 'light_yellow',
-                  'QOI_RGB': 'magenta'}
-    
-    for elem in encoded_img:
-        tag = list(elem.keys())[0]
-        color = tag_colors[tag]
-        print(colored(f'{elem}', color), ',', sep='')
-    
-    path_to_pickle_files = './data/'
-    path_to_object = os.path.join(path_to_pickle_files, pathlib.Path(filename).stem) 
-    file = open(path_to_object, 'wb')
-    pickle.dump(encoded_img, file)
-    file.close()
     
     
     
