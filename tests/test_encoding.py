@@ -1,7 +1,6 @@
 import unittest
 
 from qoi_encoder import *
-import numpy as np
 import os
 
 
@@ -14,14 +13,15 @@ class TestEncodeChunk(unittest.TestCase):
         chunk = encode_run(run_length)
         byte = chunk[0]
         
-        self.assertTrue(np.all(byte == np.array([1, 1, 0, 0, 1, 0, 1, 0])), 
-                        f"Should be 11001010, but get {byte}")
+        self.assertEqual(byte, 0b11001010 - 1, 
+                        f"Should be 0b11001010, but get {bin(byte)}")
         
         # write to file
         filename = './data/tmp.txt'
         
         with open(filename, 'wb') as file:
             write_chunk(chunk, file)
+            
         file_size = os.path.getsize(filename)
         self.assertEqual(file_size, 1, "File size should be 1 byte")
         
@@ -33,8 +33,8 @@ class TestEncodeChunk(unittest.TestCase):
         chunk = encode_diff_small(dr, dg, db)
         byte = chunk[0]
         
-        self.assertTrue(np.all(byte == np.array([0, 1, 1, 1, 1, 0, 0, 1])), 
-                        f"Should be 01111001, but get {byte}")
+        self.assertEqual(byte, 0b01111001, 
+                        f"Should be 0b01111001, but get {bin(byte)}")
         
         # write to file
         filename = './data/tmp.txt'
@@ -53,11 +53,11 @@ class TestEncodeChunk(unittest.TestCase):
         chunk = encode_diff_med(dr, dg, db)
         byte1, byte2 = chunk
         
-        self.assertTrue(np.all(byte1 == np.array([1, 0, 0, 1, 1, 0, 1, 1])), 
-                        f"Should be 10011011, but get {byte1}")
+        self.assertEqual(byte1, 0b10011011, 
+                        f"Should be 0b10011011, but get {bin(byte1)}")
         
-        self.assertTrue(np.all(byte2 == np.array([1, 1, 1, 1, 1, 1, 0, 0])), 
-                        f"Should be 11111100, but get {byte2}")
+        self.assertEqual(byte2, 0b11111100, 
+                        f"Should be 0b11111100, but get {bin(byte2)}")
         
         # write to file
         filename = './data/tmp.txt'
@@ -66,8 +66,7 @@ class TestEncodeChunk(unittest.TestCase):
             write_chunk(chunk, file)
         file_size = os.path.getsize(filename)
         self.assertEqual(file_size, 2, "File size should be 2 bytes")
-        
-        
+          
           
     
         
@@ -79,17 +78,17 @@ class TestEncodeChunk(unittest.TestCase):
         chunk = encode_rgb(R, G, B)
         rgb_tag, byte_R, byte_G, byte_B = chunk
         
-        self.assertTrue(np.all(rgb_tag == np.array([1, 1, 1, 1, 1, 1, 1, 0])), 
-                        f"Should be 11111110, but get {rgb_tag}")
+        self.assertEqual(rgb_tag, 0b11111110, 
+                        f"Should be 0b11111110, but get {bin(rgb_tag)}")
         
-        self.assertTrue(np.all(byte_R == np.array([0, 0, 1, 1, 1, 0, 1, 1])), 
-                        f"Should be 00111011, but get {byte_R}")
+        self.assertEqual(byte_R, 0b00111011, 
+                        f"Should be 00111011, but get {bin(byte_R)}")
         
-        self.assertTrue(np.all(byte_G == np.array([0, 0, 0, 0, 1, 0, 0, 0])), 
-                        f"Should be 00001000, but get {byte_G}")
+        self.assertEqual(byte_G, 0b00001000,
+                        f"Should be 00001000, but get {bin(byte_G)}")
         
-        self.assertTrue(np.all(byte_B == np.array([1, 0, 0, 1, 0, 0, 1, 1])), 
-                        f"Should be 10010011, but get {byte_B}")
+        self.assertEqual(byte_B, 0b10010011, 
+                        f"Should be 10010011, but get {bin(byte_B)}")
         
         # write to file
         filename = './data/tmp.txt'
