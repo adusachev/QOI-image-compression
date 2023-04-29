@@ -1,6 +1,7 @@
 import unittest
 
-from read_png import read_png
+import sys
+sys.path.append("..")
 from qoi_decoder import decode_byte_part
 
 

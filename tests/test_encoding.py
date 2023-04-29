@@ -1,5 +1,7 @@
 import unittest
 
+import sys
+sys.path.append("..")
 from qoi_encoder import *
 import os
 

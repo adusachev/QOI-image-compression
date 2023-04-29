@@ -3,6 +3,8 @@ from pathlib import Path
 import unittest
 import numpy as np
 
+import sys
+sys.path.append("..")
 from main import run_encoder, run_decoder
 
 
