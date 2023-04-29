@@ -48,7 +48,7 @@ def run_encoder(png_filename, qoi_filename=None):
 
     
     
-def run_decoder(qoi_filename, png_filename):
+def run_decoder(qoi_filename):
     """
     Run qoi decode algorithm on image "qoi_filename" 
     """
@@ -63,18 +63,17 @@ def run_decoder(qoi_filename, png_filename):
     img_decoded[:, :, 0] = R_decoded.reshape((height, width))
     img_decoded[:, :, 1] = G_decoded.reshape((height, width))
     img_decoded[:, :, 2] = B_decoded.reshape((height, width))
-    
-    orig_img, _, _, _ = read_png(png_filename)  # TODO: read png image in other place
-    
-    return img_decoded, orig_img, time_elapsed
+        
+    return img_decoded, time_elapsed
 
 
 
 def run_single_experiment(png_filename):
-    """_summary_
+    """
+    Run qoi_encoder on image "png_filename" and save qoi image
+    Then run qoi_decoder and compare decoded image with original png image
 
-    :param png_filename: _description_
-    :raises Exception: _description_
+    :raises Exception: if decoded qoi image is not equal to original png image
     """
     # encoding
     qoi_filename, encoding_time = run_encoder(png_filename)
@@ -82,9 +81,11 @@ def run_single_experiment(png_filename):
     logger.debug(f"Encoding time: {1000 * encoding_time:.3f} ms")
 
     # decoding
-    img_decoded, orig_img, decoding_time = run_decoder(qoi_filename, png_filename)
+    img_decoded, decoding_time = run_decoder(qoi_filename)
     
     # check that image encoded and decoded correctly
+    orig_img, _, _, _ = read_png(png_filename)
+    
     if np.all(img_decoded == orig_img):
         logger.debug("OK, decoded qoi image is equal to original png image")
     else:
@@ -114,11 +115,11 @@ def run_multiple_experiments(dir_with_png):
 
 
 if __name__ == '__main__':
-    # png_filename = "./png_images/R_video.png"
-    # run_single_experiment(png_filename)
+    png_filename = "./png_images/R_video.png"
+    run_single_experiment(png_filename)
     
-    dir_with_png = './png_images'
-    run_multiple_experiments(dir_with_png)
+    # dir_with_png = './png_images'
+    # run_multiple_experiments(dir_with_png)
     
     # png_filename = "./png_images/R_video.png"
     # run_encoder(png_filename, qoi_filename='./data/tmp.txt')

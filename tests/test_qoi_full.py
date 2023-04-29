@@ -6,6 +6,7 @@ import numpy as np
 import sys
 sys.path.append("..")
 from main import run_encoder, run_decoder
+from read_png import read_png
 
 
 class TestQOI(unittest.TestCase):
@@ -18,7 +19,10 @@ class TestQOI(unittest.TestCase):
         qoi_filename, _ = run_encoder(png_filename)
 
         # decoding
-        img_decoded, orig_img, _ = run_decoder(qoi_filename, png_filename)
+        img_decoded, _ = run_decoder(qoi_filename)
+        
+        # compare with original image
+        orig_img, _, _, _ = read_png(png_filename)
         
         self.assertTrue(np.all(img_decoded == orig_img), 
                         f"Decoding failed at indexes {np.where(img_decoded != orig_img)[0]}")
@@ -36,7 +40,10 @@ class TestQOI(unittest.TestCase):
                 qoi_filename, _ = run_encoder(png_filename)
 
                 # decoding
-                img_decoded, orig_img, _ = run_decoder(qoi_filename, png_filename)
+                img_decoded, _ = run_decoder(qoi_filename)
+                
+                # compare with original image
+                orig_img, _, _, _ = read_png(png_filename)
                 
                 self.assertTrue(np.all(img_decoded == orig_img), 
                         f"Decoding of image {qoi_filename} failed at indexes {np.where(img_decoded != orig_img)[0]}")
