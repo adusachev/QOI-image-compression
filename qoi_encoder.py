@@ -5,6 +5,7 @@ import pathlib
 from tqdm import tqdm
 import io
 import time
+from pathlib import Path
 
 
 QOI_RUN = 0b11000000
@@ -291,40 +292,44 @@ def encode(R: list,
         is_run = False
         
     
-    
-    
-    
-    
-    
-def test_encode():
-    filename = 'long_run.png'
-    # filename = 'R_video.png'
-    # filename = 'pixel_diff.png'
-    # filename = '28_pixels.png'
-    # filename = 'doge.png'
-    # filename = 'huge_6k.png'
-    
-    # output = f'./qoi_images/{pathlib.Path(filename).stem}.qoi'
 
-    _, R, G, B = read_png(f'./png_images/{filename}')
+
+
+
+
+def run_encoder(png_filename, qoi_filename=None):
+    """
+    Run qoi encode algorithm on image "png_filename"
+    Save encoded qoi image as "qoi_filename"
+    """
+    if qoi_filename is None:
+        name = Path(png_filename).stem
+        qoi_filename = f'./qoi_images/{name}.qoi'
     
-    assert isinstance(R[1], int), f'{type(R[1])}'
+    img, R, G, B = read_png(png_filename)
     
-    out_filename = './data/tmp_v2.txt'
-    file = open(out_filename, 'w')  # create empty file (or replace existing)
+    # create empty qoi file with header (or replace existing)
+    file = open(qoi_filename, 'wb')
+    write_qoi_header(img, file)
     file.close()
     
-    with open(out_filename, 'ab') as file:
-        start_time = time.time()
+    start_time = time.time()
+    with open(qoi_filename, 'ab') as file:
         encode(R, G, B, file)
-        end_time = time.time()
-
-    print(f"Time elapsed: {end_time - start_time} sec")
+    end_time = time.time()
+        
+    time_elapsed = end_time - start_time
+        
+    return qoi_filename, time_elapsed
     
 
 
 
 if __name__ == '__main__':
-    test_encode()
+    # png_filename = './debug_png_images/long_run.png'
+    png_filename = './debug_png_images/R_video.png'
+    # png_filename = './debug_png_images/pixel_diff.png'
+    # png_filename = './debug_png_images/28_pixels.png'
+    # png_filename = './debug_png_images/doge.png'
     
-    
+    qoi_filename, time_elapsed = run_encoder(png_filename)

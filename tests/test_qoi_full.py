@@ -5,7 +5,8 @@ import numpy as np
 
 import sys
 sys.path.append("..")
-from main import run_encoder, run_decoder
+from qoi_decoder import run_decoder
+from qoi_encoder import run_encoder
 from read_png import read_png
 
 

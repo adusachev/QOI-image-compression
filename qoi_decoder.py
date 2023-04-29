@@ -163,40 +163,31 @@ def decode(filename: str):
     return R_decoded, G_decoded, B_decoded, height, width
             
     
-
-
-
-def test_decode():
-    # png_filename = './png_images/long_run.png'
-    # png_filename = './png_images/R_video.png'
-    # png_filename = './png_images/28_pixels.png'
-    # png_filename = './png_images/doge.png'
-    # png_filename = './png_images/huge_6k.png'
-    png_filename = './png_images/pixel_diff.png'    
     
-    qoi_filename = './data/tmp_v2.txt'
     
-    img, R, G, B = read_png(png_filename)
-    width, height = img.shape[0], img.shape[1]
     
+def run_decoder(qoi_filename):
+    """
+    Run qoi decode algorithm on image "qoi_filename" 
+    """
     start_time = time.time()
-    R_decoded, G_decoded, B_decoded = decode(qoi_filename, width, height)
+    R_decoded, G_decoded, B_decoded, height, width = decode(qoi_filename)
     end_time = time.time()
+    
+    time_elapsed = end_time - start_time
 
-    print(np.all(R_decoded == R), np.where(R_decoded != R)[0])
-    print(np.all(G_decoded == G), np.where(G_decoded != G)[0])
-    print(np.all(B_decoded == B), np.where(B_decoded != B)[0])
+    # reshape decoded 1d arrays into image with 3 channels
+    img_decoded = np.zeros((height, width, 3), dtype=int)
+    img_decoded[:, :, 0] = R_decoded.reshape((height, width))
+    img_decoded[:, :, 1] = G_decoded.reshape((height, width))
+    img_decoded[:, :, 2] = B_decoded.reshape((height, width))
+        
+    return img_decoded, time_elapsed
 
-    print(f"Time elapsed: {end_time - start_time} sec")
 
 
 if __name__ == '__main__':
-    test_decode()
+    qoi_filename = './qoi_images/R_video.qoi'
     
+    img_decoded, time_elapsed = run_decoder(qoi_filename)
     
-        
-
-
-
-
-
