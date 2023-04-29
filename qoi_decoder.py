@@ -54,13 +54,38 @@ def decode_diff_med(byte1: int, byte2: int) -> Tuple[int, int, int]:
 
 
 
-def decode(filename, width, height):
+def read_qoi_header(qoi_bytes: bytes) -> Tuple[int, int, int, int]:
+    """
+    Read qoi header and return info about image
+    """
+    assert qoi_bytes[:4] == b'qoif', "There is no magic QOI bytes in the file header"
+    
+    width_bytes = qoi_bytes[4:8]
+    height_bytes = qoi_bytes[8:12]
+    channels = qoi_bytes[12]
+    colorspace = qoi_bytes[13]
+    
+    width = int.from_bytes(width_bytes, byteorder='big')
+    height = int.from_bytes(height_bytes, byteorder='big')
+        
+    return height, width, channels, colorspace
+
+
+
+
+
+def decode(filename: str):
     """
     Algorithm of QOI decoder
+    
+    :return: 1) R_decoded, G_decoded, B_decoded - 1d arrays of pixels of each image channel 
+             2) height, width - image size
     """
     
     with open(filename, 'rb') as f:
         qoi_bytes = f.read()
+        
+    height, width, _, _ = read_qoi_header(qoi_bytes)
     
     n = width * height
     
@@ -72,7 +97,7 @@ def decode(filename, width, height):
     m = len(qoi_bytes)
     
     pixel_counter = 0  # flatten image counter
-    byte_counter = 0  # qoi bytes counter
+    byte_counter = 14  # qoi bytes counter, starts from 14 because qoi header takes 14 bytes
     
     cur_pixel = Pixel(0, 0, 0)
     
@@ -109,7 +134,7 @@ def decode(filename, width, height):
             byte_counter += 1
             
             if hash_array[hash_index] is None:
-                raise ValueError("smth wrong with hashes")
+                raise ValueError("smth wrong with hashes, it may be error in byte indexing")
         
         elif tag == 0b01:
             tag_name = 'diff_small'
@@ -135,7 +160,7 @@ def decode(filename, width, height):
         B_decoded[pixel_counter] = cur_pixel.b
         pixel_counter += 1
         
-    return R_decoded, G_decoded, B_decoded
+    return R_decoded, G_decoded, B_decoded, height, width
             
     
 

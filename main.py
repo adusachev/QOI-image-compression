@@ -29,10 +29,11 @@ def run_encoder(png_filename, qoi_filename=None):
         name = Path(png_filename).stem
         qoi_filename = f'./qoi_images/{name}.qoi'
     
-    _, R, G, B = read_png(png_filename)
+    img, R, G, B = read_png(png_filename)
     
-    # create empty qoi file (or replace existing)
-    file = open(qoi_filename, 'w')
+    # create empty qoi file with header (or replace existing)
+    file = open(qoi_filename, 'wb')
+    qoi_encoder.write_qoi_header(img, file)
     file.close()
     
     start_time = time.time()
@@ -51,21 +52,19 @@ def run_decoder(qoi_filename, png_filename):
     """
     Run qoi decode algorithm on image "qoi_filename" 
     """
-    # TODO: remove read_png from this function, read height and width directly from qoi file
-    
-    orig_img, R, G, B = read_png(png_filename)
-    height, width = orig_img.shape[0], orig_img.shape[1]
-
     start_time = time.time()
-    R_decoded, G_decoded, B_decoded = qoi_decoder.decode(qoi_filename, width, height)
+    R_decoded, G_decoded, B_decoded, height, width = qoi_decoder.decode(qoi_filename)
     end_time = time.time()
     
     time_elapsed = end_time - start_time
 
+    # reshape decoded 1d arrays into image with 3 channels
     img_decoded = np.zeros((height, width, 3), dtype=int)
     img_decoded[:, :, 0] = R_decoded.reshape((height, width))
     img_decoded[:, :, 1] = G_decoded.reshape((height, width))
     img_decoded[:, :, 2] = B_decoded.reshape((height, width))
+    
+    orig_img, _, _, _ = read_png(png_filename)  # TODO: read png image in other place
     
     return img_decoded, orig_img, time_elapsed
 
@@ -121,4 +120,6 @@ if __name__ == '__main__':
     dir_with_png = './png_images'
     run_multiple_experiments(dir_with_png)
     
+    # png_filename = "./png_images/R_video.png"
+    # run_encoder(png_filename, qoi_filename='./data/tmp.txt')
     

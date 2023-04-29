@@ -14,6 +14,12 @@ QOI_INDEX = 0b00000000
 QOI_RGB = 0b11111110
 EMPTY_BYTE = 0b00000000
 
+# magic qoi bytes
+MAGIC_Q = 0b01110001
+MAGIC_O = 0b01101111
+MAGIC_I = 0b01101001
+MAGIC_F = 0b01100110
+
 
 
 
@@ -159,7 +165,7 @@ def write_chunk(chunk: list, f: io.BufferedWriter) -> None:
     Writes bytes from single chunk to file
 
     :param chunk: list of bytes (each byte is int)
-    :param file: path to file
+    :param file: buffered binary stream of file
     """
     for byte_val in chunk:
         val_binary = byte_val.to_bytes(length=1, byteorder='big')
@@ -167,8 +173,28 @@ def write_chunk(chunk: list, f: io.BufferedWriter) -> None:
 
 
 
-class Image:
-    pass
+def write_qoi_header(image: np.array, f: io.BufferedWriter) -> None:
+    """
+    Write qoi header bytes to file
+
+    :param image: input image
+    :param f: buffered binary stream of file
+    """
+    height, width, channels = image.shape
+    
+    channels = int(channels)
+    colorspace = 0  # TODO
+    magic_chunk = [MAGIC_Q, MAGIC_O, MAGIC_I, MAGIC_F]  # magic bytes q, o, i, f
+    
+    height_binary = height.to_bytes(length=4, byteorder='big')
+    width_binary = width.to_bytes(length=4, byteorder='big')
+    
+    write_chunk(magic_chunk, f)
+    f.write(width_binary)
+    f.write(height_binary)
+    f.write(channels.to_bytes(length=1, byteorder='big'))
+    f.write(colorspace.to_bytes(length=1, byteorder='big'))
+
 
 
 
