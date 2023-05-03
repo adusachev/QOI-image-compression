@@ -5,7 +5,7 @@ env/
 tests/__pycache__/
 __pycache__/
 .vscode/
-./data/*
+./data/
 *tmp*
 png_images/long_run.png
 experiments.ipynb

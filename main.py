@@ -22,25 +22,29 @@ logger.addHandler(handler)
 
 
 
-def run_single_experiment(png_filename):
+def run_single_experiment(png_filename, qoi_filename=None):
     """
     Run qoi_encoder on image "png_filename" and save qoi image
     Then run qoi_decoder and compare decoded image with original png image
 
     :raises Exception: if decoded qoi image is not equal to original png image
     """
+    if qoi_filename is None:
+        name = Path(png_filename).stem
+        qoi_filename = f'./qoi_images/{name}.qoi'
+    
     orig_img, _, _, _ = read_png(png_filename)
     logger.info(f"Process image {Path(png_filename).name}, size = {orig_img.shape[0]}x{orig_img.shape[1]}")
         
     # encoding
-    qoi_filename, encoding_time = run_encoder(png_filename)
+    qoi_filename, encoding_time = run_encoder(png_filename, qoi_filename)
     logger.debug(f"Image encoded and saved as {qoi_filename}")
     logger.debug(f"Encoding time: {1000 * encoding_time:.3f} ms")
 
     # decoding
     img_decoded, decoding_time = run_decoder(qoi_filename)
     
-    # check that image encoded and decoded correctly    
+    # check that image encoded and decoded correctly
     if np.all(img_decoded == orig_img):
         logger.debug("OK, decoded qoi image is equal to original png image")
     else:
@@ -68,12 +72,9 @@ def run_multiple_experiments(dir_with_png):
 
 
 if __name__ == '__main__':
-    # png_filename = "./png_images/R_video.png"
-    # run_single_experiment(png_filename)
+    png_filename = "./png_images/doge.png"
+    run_single_experiment(png_filename, qoi_filename='./qoi_images/tmp.qoi')
     
-    dir_with_png = './png_images'
-    run_multiple_experiments(dir_with_png)
-    
-    # png_filename = "./png_images/R_video.png"
-    # run_encoder(png_filename, qoi_filename='./data/tmp.txt')
+    # dir_with_png = './png_images'
+    # run_multiple_experiments(dir_with_png)
     
