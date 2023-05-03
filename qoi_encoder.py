@@ -2,7 +2,6 @@ import numpy as np
 from read_png import read_png
 import os
 import pathlib
-from tqdm import tqdm
 import io
 import time
 from pathlib import Path
@@ -305,6 +304,9 @@ def run_encoder(png_filename, qoi_filename=None):
     if qoi_filename is None:
         name = Path(png_filename).stem
         qoi_filename = f'./qoi_images/{name}.qoi'
+        
+        if not os.path.exists(os.path.join(os.getcwd(), 'qoi_images')):
+            os.mkdir('qoi_images')
     
     img, R, G, B = read_png(png_filename)
     
