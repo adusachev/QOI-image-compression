@@ -5,3 +5,8 @@ env/
 tests/__pycache__/
 __pycache__/
 .vscode/
+data/
+debug_code/
+debug_png_images/
+more_png_images/
+qoi_images/
