@@ -14,3 +14,5 @@ more_png_images/
 qoi_images/
 debug_png_images/
 debug_code/
+opencv_benchmarks.py
+*.python-version
