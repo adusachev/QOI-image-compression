@@ -4,9 +4,11 @@ from pathlib import Path
 import logging
 import numpy as np
 
-from qoi_encoder import run_encoder
-from qoi_decoder import run_decoder
-from read_png import read_png
+from qoi_compress.qoi_encoder import run_encoder
+from qoi_compress.qoi_decoder import run_decoder
+from qoi_compress.read_png import read_png
+
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 logger = logging.getLogger(__name__)
@@ -31,7 +33,7 @@ def run_single_experiment(png_filename, qoi_filename=None):
     """
     if qoi_filename is None:
         name = Path(png_filename).stem
-        qoi_filename = f'./qoi_images/{name}.qoi'
+        qoi_filename = os.path.join(BASE_DIR, f'./qoi_images/{name}.qoi')
         
         if not os.path.exists(os.path.join(os.getcwd(), 'qoi_images')):
             os.mkdir('qoi_images')
@@ -74,10 +76,11 @@ def run_multiple_experiments(dir_with_png):
 
 
 
-if __name__ == '__main__':
-    png_filename = "./png_images/doge.png"
-    run_single_experiment(png_filename, qoi_filename='./qoi_images/tmp.qoi')
+if __name__ == '__main__':    
+    png_filename = str(BASE_DIR / "png_images/doge.png")
+    qoi_filename = str(BASE_DIR / 'qoi_images/tmp.qoi')
+    run_single_experiment(png_filename, qoi_filename=qoi_filename)
     
-    # dir_with_png = './png_images'
+    # dir_with_png = str(BASE_DIR / "png_images/")
     # run_multiple_experiments(dir_with_png)
     

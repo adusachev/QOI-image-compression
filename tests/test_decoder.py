@@ -1,8 +1,6 @@
 import unittest
 
-import sys
-sys.path.append("..")
-from qoi_decoder import decode_byte_part
+from qoi_compress.qoi_decoder import decode_byte_part
 
 
 

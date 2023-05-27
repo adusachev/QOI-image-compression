@@ -3,18 +3,19 @@ from pathlib import Path
 import unittest
 import numpy as np
 
-import sys
-sys.path.append("..")
-from qoi_decoder import run_decoder
-from qoi_encoder import run_encoder
-from read_png import read_png
+from qoi_compress.qoi_decoder import run_decoder
+from qoi_compress.qoi_encoder import run_encoder
+from qoi_compress.read_png import read_png
+
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 class TestQOI(unittest.TestCase):
     
     def test_single_image(self):
         
-        png_filename = "./png_images/R_video.png"
+        png_filename = str(BASE_DIR / "png_images/R_video.png")
         
         # encoding
         qoi_filename, _ = run_encoder(png_filename)
@@ -31,7 +32,7 @@ class TestQOI(unittest.TestCase):
     
     def test_multiple_images(self):
         
-        dir_with_png = "./png_images"
+        dir_with_png = str(BASE_DIR / "png_images/")
         
         for name in os.listdir(dir_with_png):
             if Path(name).suffix == ".png":

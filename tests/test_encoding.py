@@ -1,9 +1,10 @@
 import unittest
-
-import sys
-sys.path.append("..")
-from qoi_encoder import *
 import os
+from pathlib import Path
+
+from qoi_compress.qoi_encoder import *
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 class TestEncodeChunk(unittest.TestCase):
@@ -13,12 +14,12 @@ class TestEncodeChunk(unittest.TestCase):
         run_length = 10
         chunk = encode_run(run_length)
         byte = chunk[0]
-        
+                
         self.assertEqual(byte, 0b11001010 - 1, 
                         f"Should be 0b11001010, but get {bin(byte)}")
         
         # write to file
-        filename = './data/tmp.txt'
+        filename = str(BASE_DIR / "data/tmp.txt")
         
         with open(filename, 'wb') as file:
             write_chunk(chunk, file)
@@ -38,7 +39,7 @@ class TestEncodeChunk(unittest.TestCase):
                         f"Should be 0b01111001, but get {bin(byte)}")
         
         # write to file
-        filename = './data/tmp.txt'
+        filename = str(BASE_DIR / "data/tmp.txt")
         
         with open(filename, 'wb') as file:
             write_chunk(chunk, file)
@@ -61,7 +62,7 @@ class TestEncodeChunk(unittest.TestCase):
                         f"Should be 0b11111100, but get {bin(byte2)}")
         
         # write to file
-        filename = './data/tmp.txt'
+        filename = str(BASE_DIR / "data/tmp.txt")
         
         with open(filename, 'wb') as file:
             write_chunk(chunk, file)
@@ -92,7 +93,7 @@ class TestEncodeChunk(unittest.TestCase):
                         f"Should be 10010011, but get {bin(byte_B)}")
         
         # write to file
-        filename = './data/tmp.txt'
+        filename = str(BASE_DIR / "data/tmp.txt")
         
         with open(filename, 'wb') as file:
             write_chunk(chunk, file)

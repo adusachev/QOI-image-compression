@@ -1,11 +1,12 @@
 import numpy as np
-from read_png import read_png
+from qoi_compress.read_png import read_png
 import os
 import pathlib
 import io
 import time
 from pathlib import Path
 
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 QOI_RUN = 0b11000000
 QOI_DIFF_SMALL = 0b01000000
@@ -328,10 +329,6 @@ def run_encoder(png_filename, qoi_filename=None):
 
 
 if __name__ == '__main__':
-    # png_filename = './debug_png_images/long_run.png'
-    png_filename = './debug_png_images/R_video.png'
-    # png_filename = './debug_png_images/pixel_diff.png'
-    # png_filename = './debug_png_images/28_pixels.png'
-    # png_filename = './debug_png_images/doge.png'
+    png_filename = str(BASE_DIR / "debug_png_images/R_video.png")
     
     qoi_filename, time_elapsed = run_encoder(png_filename)

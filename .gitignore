@@ -5,7 +5,7 @@ env/
 tests/__pycache__/
 __pycache__/
 .vscode/
-./data/
+data/
 *tmp*
 png_images/long_run.png
 experiments.ipynb
@@ -16,3 +16,7 @@ debug_png_images/
 debug_code/
 opencv_benchmarks.py
 *.python-version
+dist/
+qoi_compress.egg-info/
+build/
+venv*/

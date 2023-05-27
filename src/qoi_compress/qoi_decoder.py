@@ -1,11 +1,12 @@
 import numpy as np
 import os
-from qoi_encoder import Pixel
-from read_png import read_png
+from qoi_compress.qoi_encoder import Pixel
+from qoi_compress.read_png import read_png
 from typing import Tuple
 import time
+from pathlib import Path
 
-
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 def decode_byte_part(byte: int, right_offset: int, bits_num: int) -> int:
     """
@@ -187,7 +188,7 @@ def run_decoder(qoi_filename):
 
 
 if __name__ == '__main__':
-    qoi_filename = './qoi_images/R_video.qoi'
+    qoi_filename = str(BASE_DIR / "qoi_images/R_video.qoi")
     
     img_decoded, time_elapsed = run_decoder(qoi_filename)
     
