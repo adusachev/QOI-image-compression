@@ -1,4 +1,4 @@
-name: Build package and run tests
+name: Build and tests
 
 on: 
   - push
@@ -43,3 +43,15 @@ jobs:
         run: pip3 install qoi_compress-*.whl
       - name: Run tests
         run: python -m unittest discover -s tests
+
+  type-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the repository code
+        uses: actions/checkout@v3
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+      - name: Run mypy tests
+        run: mypy src
