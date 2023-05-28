@@ -6,6 +6,9 @@ from qoi_compress.qoi_encoder import *
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+if not os.path.exists(BASE_DIR / "data"):
+    os.mkdir(BASE_DIR / "data")
+
 
 class TestEncodeChunk(unittest.TestCase):
         
