@@ -1,3 +1,6 @@
+
+[![Build Status](https://github.com/adusachev/QOI-image-compression/actions/workflows/testing.yml/badge.svg)](https://github.com/adusachev/QOI-image-compression/actions/workflows/testing.yml)
+
 # QOI image compression
 
 Python implementation of QOI encoder and decoder
