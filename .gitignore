@@ -20,3 +20,4 @@ dist/
 qoi_compress.egg-info/
 build/
 venv*/
+.mypy_cache
