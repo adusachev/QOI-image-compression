@@ -6,6 +6,7 @@ from typing import List, Tuple, Optional
 from enum import Enum
 import numpy as np
 from qoi_compress.read_png import read_png
+from qoi_compress.setup_logger import logger
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -334,6 +335,8 @@ def run_encoder(png_filename: str, qoi_filename: Optional[str] = None) -> Tuple[
     end_time = time.time()
         
     time_elapsed = end_time - start_time
+    logger.debug(f"Image encoded and saved as {qoi_filename}")
+    logger.debug(f"Encoding time: {1000 * time_elapsed:.3f} ms")
         
     return qoi_filename, time_elapsed
     

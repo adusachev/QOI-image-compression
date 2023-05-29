@@ -3,6 +3,7 @@ from typing import Tuple
 from pathlib import Path
 import numpy as np
 from qoi_compress.qoi_encoder import Pixel, ChunkType
+from qoi_compress.setup_logger import logger
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -175,6 +176,9 @@ def run_decoder(qoi_filename: str) -> Tuple[np.ndarray, float]:
     img_decoded[:, :, 0] = R_decoded.reshape((height, width))
     img_decoded[:, :, 1] = G_decoded.reshape((height, width))
     img_decoded[:, :, 2] = B_decoded.reshape((height, width))
+    
+    logger.debug(f"File {qoi_filename} decoded")
+    logger.debug(f"Decoding time: {1000 * time_elapsed:.3f} ms")
         
     return img_decoded, time_elapsed
 
