@@ -310,18 +310,11 @@ def encode(R: List[int],
 
 
 
-def run_encoder(png_filename: str, qoi_filename: Optional[str] = None) -> Tuple[str, float]:
+def run_encoder(png_filename: str, qoi_filename: str) -> Tuple[str, float]:
     """
     Run qoi encode algorithm on image "png_filename"
     Save encoded qoi image as "qoi_filename"
-    """
-    if qoi_filename is None:
-        name = Path(png_filename).stem
-        qoi_filename = str(BASE_DIR / 'qoi_images' / f'{name}.qoi')
-        
-        if not os.path.exists(BASE_DIR / 'qoi_images'):
-            os.mkdir(BASE_DIR / 'qoi_images')
-    
+    """    
     img, R, G, B = read_png(png_filename)
     
     # create empty qoi file with header (or replace existing)
@@ -344,6 +337,7 @@ def run_encoder(png_filename: str, qoi_filename: Optional[str] = None) -> Tuple[
 
 
 if __name__ == '__main__':
-    png_filename = str(BASE_DIR / "png_images/doge.png")
+    png_filename = str(BASE_DIR / "png_images/R_video.png")
+    qoi_filename = str(BASE_DIR / "qoi_images/R_video.qoi")
     
-    qoi_filename, time_elapsed = run_encoder(png_filename)
+    qoi_filename, time_elapsed = run_encoder(png_filename, qoi_filename)

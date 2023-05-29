@@ -10,7 +10,7 @@ from qoi_compress.setup_logger import logger
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
-def run_single_experiment(png_filename: str, qoi_filename: Optional[str] = None) -> None:
+def run_single_experiment(png_filename: str, qoi_filename: str) -> None:
     """
     Run qoi_encoder on image "png_filename" and save qoi image
     Then run qoi_decoder and compare decoded image with original png image
@@ -36,15 +36,17 @@ def run_single_experiment(png_filename: str, qoi_filename: Optional[str] = None)
     
 
 
-def run_multiple_experiments(dir_with_png: str) -> None:
+def run_multiple_experiments(dir_with_png: str, dir_with_qoi: str) -> None:
     """ 
     Launch run_single_experiment() for each png file in "dir_with_png"
     """
-    for name in os.listdir(dir_with_png):
-        if Path(name).suffix == ".png":
-            png_filename = os.path.join(dir_with_png, name)
+    for filename in os.listdir(dir_with_png):
+        if Path(filename).suffix == ".png":
+            name = Path(filename).stem
+            png_file = os.path.join(dir_with_png, filename)
+            qoi_file = os.path.join(dir_with_qoi, f"{name}.qoi")
                 
-            run_single_experiment(png_filename)
+            run_single_experiment(png_file, qoi_file)
             print('------------------------------------- \n')
 
 
@@ -52,12 +54,10 @@ def run_multiple_experiments(dir_with_png: str) -> None:
 
 
 if __name__ == '__main__':    
-    png_filename = str(BASE_DIR / "png_images/doge.png")
-    qoi_filename = str(BASE_DIR / 'qoi_images/tmp.qoi')
-    run_single_experiment(png_filename, qoi_filename=qoi_filename)
-    
-    # dir_with_png = str(BASE_DIR / "png_images/")
-    # run_multiple_experiments(dir_with_png)
+    # png_filename = str(BASE_DIR / "png_images/doge.png")
+    # qoi_filename = str(BASE_DIR / 'qoi_images/tmp.qoi')
+    # run_single_experiment(png_filename, qoi_filename)
     
     # dir_with_png = str(BASE_DIR / "debug_png_images/")
-    # run_multiple_experiments(dir_with_png)
+    # dir_with_qoi = str(BASE_DIR / "qoi_images/")
+    # run_multiple_experiments(dir_with_png, dir_with_qoi)
