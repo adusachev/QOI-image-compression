@@ -1,27 +1,49 @@
-import numpy as np
-from qoi_compress.read_png import read_png
 import os
-import pathlib
 import io
 import time
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Optional
+from enum import Enum
+import numpy as np
+from qoi_compress.read_png import read_png
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-QOI_RUN = 0b11000000
-QOI_DIFF_SMALL = 0b01000000
-QOI_DIFF_MED = 0b10000000
-QOI_INDEX = 0b00000000
-QOI_RGB = 0b11111110
-EMPTY_BYTE = 0b00000000
 
-# magic qoi bytes
-MAGIC_Q = 0b01110001
-MAGIC_O = 0b01101111
-MAGIC_I = 0b01101001
-MAGIC_F = 0b01100110
+class ChunkType(int, Enum):
+    """Tags for qoi chuncks"""
+    QOI_RUN = 0b11000000
+    QOI_DIFF_SMALL = 0b01000000
+    QOI_DIFF_MED = 0b10000000
+    QOI_INDEX = 0b00000000
+    QOI_RGB = 0b11111110
+    EMPTY_BYTE = 0b00000000
+    
+    
+class MagicBytes(int, Enum):
+    """Magic bytes for qoi file header"""
+    MAGIC_Q = 0b01110001
+    MAGIC_O = 0b01101111
+    MAGIC_I = 0b01101001
+    MAGIC_F = 0b01100110
 
+
+class Pixel:
+    """
+    Class to store pixel channels values
+    """
+    def __init__(self, r: int, g: int, b: int):
+        self.r = r
+        self.g = g
+        self.b = b
+        
+    def __eq__(self, other):
+        return (self.r == other.r) and (self.g == other.g) and (self.b == other.b)
+        
+    def hash_value(self) -> int:
+        """Hash function for QOI_INDEX"""
+        return (self.r * 3 + self.g * 5 + self.b * 7) % 64
+        # return (self.r * 3 + self.g * 5 + self.b * 7 + 255 * 11) % 64  # to compare
 
 
 
@@ -29,10 +51,10 @@ def encode_byte_part(value: int, bits_num: int, right_offset: int, byte: int) ->
     """
     Write value to a part of byte
 
-    :param value: decimal value to encode (0-255)
+    :param value: value to encode (0-255)
     :param bits_num: number of bits, needed to encode value (1-8)
     :param right_offset: bit offset 
-                        (e.g. the binary value 101 written in byte 00000000 with right_offset=2 will give 00010100) 
+     (e.g. the binary value 101 written in byte 00000000 with right_offset=2 will give 00010100) 
     :param byte: the byte in which our value will be written
     :return: byte with written value
     """
@@ -47,8 +69,6 @@ def encode_byte_part(value: int, bits_num: int, right_offset: int, byte: int) ->
 
 
 
-
-
 def encode_run(run_length: int) -> List[int]:
     """
     Encode QOI_RUN chunk
@@ -56,13 +76,12 @@ def encode_run(run_length: int) -> List[int]:
     :param run_length: run-length repeating the previous pixel (1-62)
     :return: list of bytes encoding QOI_RUN chunk (here list of one byte, byte is int)
     """
-    byte = QOI_RUN
+    byte = ChunkType.QOI_RUN.value
     run_length -= 1  # run-length is stored with a bias of -1 (i.e. values are 0-61)
     byte = encode_byte_part(value=run_length, bits_num=6, right_offset=0, byte=byte)
     chunk = [byte]
     
     return chunk
-
 
 
 
@@ -78,7 +97,7 @@ def encode_diff_small(dr: int, dg: int, db: int) -> List[int]:
     assert (-2 <= dr <= 1) and (-2 <= dg <= 1) and (-2 <= db <= 1), \
         f"one of the values dr={dr}, dg={dg}, db={db} does not lie in the range [-2, 1]"
         
-    byte = QOI_DIFF_SMALL
+    byte = ChunkType.QOI_DIFF_SMALL.value
     right_offset = 4
     for d_channel in [dr, dg, db]:
         d_channel += 2  # values are stored with a bias of 2
@@ -111,10 +130,10 @@ def encode_diff_med(dr: int, dg: int, db: int) -> List[int]:
     dr_dg += 8
     db_dg += 8
     
-    byte1 = QOI_DIFF_MED
+    byte1 = ChunkType.QOI_DIFF_MED.value
     byte1 = encode_byte_part(value=dg, bits_num=6, right_offset=0, byte=byte1)
     
-    byte2 = EMPTY_BYTE
+    byte2 = ChunkType.EMPTY_BYTE.value
     byte2 = encode_byte_part(value=dr_dg, bits_num=4, right_offset=4, byte=byte2)
     byte2 = encode_byte_part(value=db_dg, bits_num=4, right_offset=0, byte=byte2)
 
@@ -123,16 +142,14 @@ def encode_diff_med(dr: int, dg: int, db: int) -> List[int]:
     
     
 
-    
-    
 def encode_index(hash_index: int) -> List[int]:
     """
     Encode QOI_INDEX chunk
 
-    :param hash_index: ....
-    :return: list of bytes encoding QOI_INDEX chunk (here list of one int)
+    :param hash_index: hash value of the pixel
+    :return: list of bytes encoding QOI_INDEX chunk
     """
-    byte = QOI_INDEX
+    byte = ChunkType.QOI_INDEX.value
 
     byte = encode_byte_part(value=hash_index, bits_num=6, right_offset=0, byte=byte)
     chunk = [byte]
@@ -140,20 +157,21 @@ def encode_index(hash_index: int) -> List[int]:
     return chunk
     
 
-def encode_rgb(R: int, G: int, B: int) -> List[int]:
+
+def encode_rgb(r_value: int, g_value: int, b_value: int) -> List[int]:
     """
     Encode QOI_RGB chunk
 
     :param R: 8-bit red channel value
     :param G: 8-bit green channel value
     :param B: 8-bit blue channel value
-    :return: list of bytes encoding QOI_RGB chunk (here list of four ints)
+    :return: list of bytes encoding QOI_RGB chunk
     """
-    byte1 = QOI_RGB
+    byte1 = ChunkType.QOI_RGB.value
     chunk = [byte1]
 
-    for channel in [R, G, B]:
-        byte = EMPTY_BYTE
+    for channel in [r_value, g_value, b_value]:
+        byte = ChunkType.EMPTY_BYTE.value
         byte = encode_byte_part(value=channel, bits_num=8, right_offset=0, byte=byte)
         chunk.append(byte)
     
@@ -161,21 +179,20 @@ def encode_rgb(R: int, G: int, B: int) -> List[int]:
 
     
 
-
-def write_chunk(chunk: list, f: io.BufferedWriter) -> None:
+def write_chunk(chunk: List[int], file_content: io.BufferedWriter) -> None:
     """
     Writes bytes from single chunk to file
 
-    :param chunk: list of bytes (each byte is int)
+    :param chunk: list of bytes
     :param file: buffered binary stream of file
     """
     for byte_val in chunk:
         val_binary = byte_val.to_bytes(length=1, byteorder='big')
-        f.write(val_binary)
+        file_content.write(val_binary)
 
 
 
-def write_qoi_header(image: np.ndarray, f: io.BufferedWriter) -> None:
+def write_qoi_header(image: np.ndarray, file_content: io.BufferedWriter) -> None:
     """
     Write qoi header bytes to file
 
@@ -186,36 +203,17 @@ def write_qoi_header(image: np.ndarray, f: io.BufferedWriter) -> None:
     
     channels = int(channels)
     colorspace = 0  # TODO
-    magic_chunk = [MAGIC_Q, MAGIC_O, MAGIC_I, MAGIC_F]  # magic bytes q, o, i, f
+    magic_chunk = [MagicBytes.MAGIC_Q.value, MagicBytes.MAGIC_O.value, 
+                   MagicBytes.MAGIC_I.value, MagicBytes.MAGIC_F.value]
     
     height_binary = height.to_bytes(length=4, byteorder='big')
     width_binary = width.to_bytes(length=4, byteorder='big')
     
-    write_chunk(magic_chunk, f)
-    f.write(width_binary)
-    f.write(height_binary)
-    f.write(channels.to_bytes(length=1, byteorder='big'))
-    f.write(colorspace.to_bytes(length=1, byteorder='big'))
-
-
-
-
-
-class Pixel:
-    
-    def __init__(self, r: int, g: int, b: int):
-        self.r = r
-        self.g = g
-        self.b = b
-        
-    def __eq__(self, other):
-        return (self.r == other.r) and (self.g == other.g) and (self.b == other.b)
-        
-    def hash_value(self) -> int:
-        """Hash function for QOI_INDEX"""
-        return (self.r * 3 + self.g * 5 + self.b * 7) % 64
-        # return (self.r * 3 + self.g * 5 + self.b * 7 + 255 * 11) % 64  # to compare
-
+    write_chunk(magic_chunk, file_content)
+    file_content.write(width_binary)
+    file_content.write(height_binary)
+    file_content.write(channels.to_bytes(length=1, byteorder='big'))
+    file_content.write(colorspace.to_bytes(length=1, byteorder='big'))
 
 
 
@@ -224,21 +222,23 @@ def encode(R: List[int],
            G: List[int], 
            B: List[int], 
            file: io.BufferedWriter) -> None:
-    
+    """
+    QOI encoder algorithm
+
+    :param R: list with R-channel values
+    :param G: list with G-channel values
+    :param B: list with B-channel values
+    :param file: encoded bytes
+    """
     is_run = False
     run_length = 0
-    
-    n = len(R)
-    
     hash_array = [Pixel(0, 0, 0) for i in range(64)]
+    cur_pixel = Pixel(0, 0, 0)
+    n = len(R)
 
     for i in range(n):
-        cur_pixel = Pixel(R[i], G[i], B[i])        
-        
-        if i == 0:
-            prev_pixel = Pixel(0, 0, 0)
-        else:
-            prev_pixel = Pixel( R[i-1], G[i-1], B[i-1] )
+        prev_pixel = cur_pixel
+        cur_pixel = Pixel(R[i], G[i], B[i])
         
         if cur_pixel == prev_pixel:
             is_run = True
@@ -255,7 +255,6 @@ def encode(R: List[int],
             run_length = 0
             is_run = False
         
-               
         hash_index = cur_pixel.hash_value()
         
         if hash_array[hash_index] == Pixel(0, 0, 0):
@@ -296,9 +295,7 @@ def encode(R: List[int],
 
 
 
-
-
-def run_encoder(png_filename, qoi_filename=None) -> Tuple[str, float]:
+def run_encoder(png_filename: str, qoi_filename: Optional[str] = None) -> Tuple[str, float]:
     """
     Run qoi encode algorithm on image "png_filename"
     Save encoded qoi image as "qoi_filename"
@@ -307,8 +304,8 @@ def run_encoder(png_filename, qoi_filename=None) -> Tuple[str, float]:
         name = Path(png_filename).stem
         qoi_filename = f'./qoi_images/{name}.qoi'
         
-        if not os.path.exists(os.path.join(os.getcwd(), 'qoi_images')):
-            os.mkdir('qoi_images')
+        if not os.path.exists(BASE_DIR / 'qoi_images'):
+            os.mkdir(BASE_DIR / 'qoi_images')
     
     img, R, G, B = read_png(png_filename)
     
