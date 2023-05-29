@@ -1,35 +1,67 @@
 
 [![Build Status](https://github.com/adusachev/QOI-image-compression/actions/workflows/testing.yml/badge.svg)](https://github.com/adusachev/QOI-image-compression/actions/workflows/testing.yml)
 
+
 # QOI image compression
 
 Python implementation of QOI encoder and decoder
 
 QOI format: https://qoiformat.org/
 
+## Installation
+
+```
+git clone https://github.com/adusachev/QOI-image-compression.git
+```
+
+```
+python setup.py install
+```
+
 
 ## Usage
 
-**1) Encode single .png image and save .qoi image**
 
-At the end of `qoi_encoder.py` enter path to .png image and run: 
-```
-python3 qoi_encoder.py
-```
+1) Encode: convert png image to qoi image
+```python
+from qoi_compress import qoi_encoder
 
+png_file = "./png_images/doge.png"
+qoi_file = "./qoi_images/doge.qoi"  # where to save qoi image
 
-**2) Decode single .qoi image**
-
-At the end of `qoi_decoder.py` enter path to .qoi image and run: 
-```
-python3 qoi_decoder.py
+qoi_encoder.run_encoder(png_file, qoi_file)
 ```
 
+2) Decode: import .qoi file into numpy array
+```python
+from qoi_compress import qoi_decoder
 
-**3) Encode and decode all .png images in some directory, compare decoded .qoi image with original .png image**
+qoi_file = "./qoi_images/doge.qoi"
 
-At the end of `main.py` choose `dir_with_png` and uncomment line with `run_multiple_experiments(dir_with_png)`, then run:
+img_decoded, time_elapsed = qoi_encoder.run_decoder(qoi_file)
+img_decoded
 ```
-python3 main.py
+
+3) Test: encode image `png_file` and save it as `qoi_file`, then decode `qoi_file` and compare decoded qoi image with original png image
+```python
+from qoi_compress.main import run_single_experiment
+
+png_file = "./png_images/doge.png"
+qoi_file = "./qoi_images/doge.qoi"
+
+run_single_experiment(png_file, qoi_file)
 ```
 
+
+## Benchmarks
+
+| Image size | Encoding time | Decoding time | Compression ratio |
+| ---------- | ------------- | ------------- | ----------------- |
+| 460x460    | 0.7 sec       | 0.3 sec       | 2.2               |
+| 1920x1080  | 5.5 sec       | 2.5 sec       | 2.56              |
+| 3840x2400  | 42 sec        | 19 sec        | 1.83              | 
+
+
+## TODO
+
+Add support for RGBA images
