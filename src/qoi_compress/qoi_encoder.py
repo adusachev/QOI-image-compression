@@ -302,7 +302,7 @@ def run_encoder(png_filename: str, qoi_filename: Optional[str] = None) -> Tuple[
     """
     if qoi_filename is None:
         name = Path(png_filename).stem
-        qoi_filename = f'./qoi_images/{name}.qoi'
+        qoi_filename = str(BASE_DIR / 'qoi_images' / f'{name}.qoi')
         
         if not os.path.exists(BASE_DIR / 'qoi_images'):
             os.mkdir(BASE_DIR / 'qoi_images')

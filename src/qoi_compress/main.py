@@ -30,14 +30,7 @@ def run_single_experiment(png_filename, qoi_filename=None):
     Then run qoi_decoder and compare decoded image with original png image
 
     :raises Exception: if decoded qoi image is not equal to original png image
-    """
-    if qoi_filename is None:
-        name = Path(png_filename).stem
-        qoi_filename = os.path.join(BASE_DIR, f'./qoi_images/{name}.qoi')
-        
-        if not os.path.exists(os.path.join(os.getcwd(), 'qoi_images')):
-            os.mkdir('qoi_images')
-    
+    """    
     orig_img, _, _, _ = read_png(png_filename)
     logger.info(f"Process image {Path(png_filename).name}, size = {orig_img.shape[0]}x{orig_img.shape[1]}")
         
