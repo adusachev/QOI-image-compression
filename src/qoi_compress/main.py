@@ -1,15 +1,13 @@
 import os
-import time
+from typing import Optional
 from pathlib import Path
 import logging
 import numpy as np
-
 from qoi_compress.qoi_encoder import run_encoder
 from qoi_compress.qoi_decoder import run_decoder
 from qoi_compress.read_png import read_png
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-
 
 logger = logging.getLogger(__name__)
 loglevel = "DEBUG"
@@ -22,9 +20,7 @@ logger.addHandler(handler)
 
 
 
-
-
-def run_single_experiment(png_filename, qoi_filename=None):
+def run_single_experiment(png_filename: str, qoi_filename: Optional[str] = None) -> None:
     """
     Run qoi_encoder on image "png_filename" and save qoi image
     Then run qoi_decoder and compare decoded image with original png image
@@ -54,7 +50,7 @@ def run_single_experiment(png_filename, qoi_filename=None):
 
 
 
-def run_multiple_experiments(dir_with_png):
+def run_multiple_experiments(dir_with_png: str) -> None:
     """ 
     Launch run_single_experiment() for each png file in "dir_with_png"
     """
@@ -79,4 +75,3 @@ if __name__ == '__main__':
     
     dir_with_png = str(BASE_DIR / "debug_png_images/")
     run_multiple_experiments(dir_with_png)
-    

@@ -1,12 +1,12 @@
-import numpy as np
-import os
-from qoi_compress.qoi_encoder import Pixel
-from qoi_compress.read_png import read_png
-from typing import Tuple
 import time
+from typing import Tuple
 from pathlib import Path
+import numpy as np
+from qoi_compress.qoi_encoder import Pixel, ChunkType
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+
 
 def decode_byte_part(byte: int, right_offset: int, bits_num: int) -> int:
     """
@@ -36,6 +36,7 @@ def decode_diff_small(byte: int) -> Tuple[int, ...]:
     db -= 2
     
     return dr, dg, db
+
 
 
 def decode_diff_med(byte1: int, byte2: int) -> Tuple[int, ...]:
@@ -74,7 +75,6 @@ def read_qoi_header(qoi_bytes: bytes) -> Tuple[int, ...]:
 
 
 
-
 def decode(filename: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray, int, int]:
     """
     Algorithm of QOI decoder
@@ -82,42 +82,37 @@ def decode(filename: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray, int, int]
     :return: 1) R_decoded, G_decoded, B_decoded - 1d arrays of pixels of each image channel 
              2) height, width - image size
     """
-    
     with open(filename, 'rb') as f:
         qoi_bytes = f.read()
         
     height, width, _, _ = read_qoi_header(qoi_bytes)
-    
     n = width * height
+    m = len(qoi_bytes)
     
     R_decoded = np.zeros(n)
     G_decoded = np.zeros(n)
     B_decoded = np.zeros(n)
     hash_array = [Pixel(0, 0, 0) for i in range(64)]
     
-    m = len(qoi_bytes)
-    
     pixel_counter = 0  # flatten image counter
     byte_counter = 14  # qoi bytes counter, starts from 14 because qoi header takes 14 bytes
-    
     cur_pixel = Pixel(0, 0, 0)
     
     while byte_counter != m:
-        
         prev_pixel = cur_pixel
         
         byte = qoi_bytes[byte_counter]
         tag = byte >> 6  # first 2 numbers of byte (e.g. ab from abxxxxxx)
         
         if byte == 0b11111110:
-            tag_name = 'rgb'
+            tag_name = ChunkType.QOI_RGB
             cur_pixel = Pixel(qoi_bytes[byte_counter+1],
                               qoi_bytes[byte_counter+2], 
                               qoi_bytes[byte_counter+3])         
             byte_counter += 4
             
         elif tag == 0b11:
-            tag_name = 'run'
+            tag_name = ChunkType.QOI_RUN
             run_length = decode_byte_part(byte, right_offset=0, bits_num=6)
             run_length += 1  # bias
             for i in range(run_length):
@@ -129,7 +124,7 @@ def decode(filename: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray, int, int]
             continue
             
         elif tag == 0b00:
-            tag_name = 'index'
+            tag_name = ChunkType.QOI_INDEX
             hash_index = decode_byte_part(byte, right_offset=0, bits_num=6)
             cur_pixel = hash_array[hash_index]
             byte_counter += 1
@@ -138,13 +133,13 @@ def decode(filename: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray, int, int]
                 raise ValueError("smth wrong with hashes, it may be error in byte indexing")
         
         elif tag == 0b01:
-            tag_name = 'diff_small'
+            tag_name = ChunkType.QOI_DIFF_SMALL
             dr, dg, db = decode_diff_small(byte)
             cur_pixel = Pixel(prev_pixel.r + dr, prev_pixel.g + dg, prev_pixel.b + db)
             byte_counter += 1
             
         elif tag == 0b10:
-            tag_name = 'diff_med'
+            tag_name = ChunkType.QOI_DIFF_MED
             next_byte = qoi_bytes[byte_counter+1]
             dr, dg, db = decode_diff_med(byte, next_byte)
             cur_pixel = Pixel(prev_pixel.r + dr, prev_pixel.g + dg, prev_pixel.b + db)
@@ -163,8 +158,6 @@ def decode(filename: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray, int, int]
         
     return R_decoded, G_decoded, B_decoded, height, width
             
-    
-    
     
     
 def run_decoder(qoi_filename: str) -> Tuple[np.ndarray, float]:
@@ -191,4 +184,3 @@ if __name__ == '__main__':
     qoi_filename = str(BASE_DIR / "qoi_images/R_video.qoi")
     
     img_decoded, time_elapsed = run_decoder(qoi_filename)
-    
