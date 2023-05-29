@@ -1,7 +1,7 @@
+from typing import Tuple, List
 import numpy as np
 import matplotlib.pyplot as plt  # type: ignore
-import cv2 as cv  # type: ignore
-from typing import Tuple, List
+from PIL import Image  # type: ignore
 
 
 def read_png(path_to_png: str, 
@@ -15,8 +15,8 @@ def read_png(path_to_png: str,
              2) R_flat - flatten 1d array of R-cahnnel pixel values, shape=(heigth*width,)
              3) G_flat, B_flat - analogically to R_flat
     """
-    img = cv.imread(path_to_png)
-    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)  # BGR -> RGB
+    img = np.asarray(Image.open(path_to_png))
+    img = img[:, :, :3]
     
     R = img[:, :, 0].astype(int)
     G = img[:, :, 1].astype(int)
