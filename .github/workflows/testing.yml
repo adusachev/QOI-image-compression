@@ -54,6 +54,8 @@ jobs:
         with:
           python-version: 3.8
       - name: Install mypy
-        run: pip3 install mypy
+        run: |
+          pip3 install mypy
+          pip3 install numpy
       - name: Run mypy tests
         run: mypy src
