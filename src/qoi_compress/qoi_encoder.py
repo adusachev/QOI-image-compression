@@ -5,6 +5,7 @@ import pathlib
 import io
 import time
 from pathlib import Path
+from typing import List, Tuple
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -48,7 +49,7 @@ def encode_byte_part(value: int, bits_num: int, right_offset: int, byte: int) ->
 
 
 
-def encode_run(run_length: int) -> list:
+def encode_run(run_length: int) -> List[int]:
     """
     Encode QOI_RUN chunk
 
@@ -65,7 +66,7 @@ def encode_run(run_length: int) -> list:
 
 
 
-def encode_diff_small(dr: int, dg: int, db: int) -> list:
+def encode_diff_small(dr: int, dg: int, db: int) -> List[int]:
     """
     Encode QOI_DIFF_SMALL chunk
 
@@ -89,7 +90,7 @@ def encode_diff_small(dr: int, dg: int, db: int) -> list:
 
 
 
-def encode_diff_med(dr: int, dg: int, db: int) -> list:
+def encode_diff_med(dr: int, dg: int, db: int) -> List[int]:
     """
     Encode QOI_DIFF_MED chunk
 
@@ -124,7 +125,7 @@ def encode_diff_med(dr: int, dg: int, db: int) -> list:
 
     
     
-def encode_index(hash_index: int) -> list:
+def encode_index(hash_index: int) -> List[int]:
     """
     Encode QOI_INDEX chunk
 
@@ -139,7 +140,7 @@ def encode_index(hash_index: int) -> list:
     return chunk
     
 
-def encode_rgb(R: int, G: int, B: int) -> list:
+def encode_rgb(R: int, G: int, B: int) -> List[int]:
     """
     Encode QOI_RGB chunk
 
@@ -174,7 +175,7 @@ def write_chunk(chunk: list, f: io.BufferedWriter) -> None:
 
 
 
-def write_qoi_header(image: np.array, f: io.BufferedWriter) -> None:
+def write_qoi_header(image: np.ndarray, f: io.BufferedWriter) -> None:
     """
     Write qoi header bytes to file
 
@@ -219,9 +220,9 @@ class Pixel:
 
 
 
-def encode(R: list, 
-           G: list, 
-           B: list, 
+def encode(R: List[int], 
+           G: List[int], 
+           B: List[int], 
            file: io.BufferedWriter) -> None:
     
     is_run = False
@@ -229,7 +230,7 @@ def encode(R: list,
     
     n = len(R)
     
-    hash_array = [None for i in range(64)]
+    hash_array = [Pixel(0, 0, 0) for i in range(64)]
 
     for i in range(n):
         cur_pixel = Pixel(R[i], G[i], B[i])        
@@ -257,7 +258,7 @@ def encode(R: list,
                
         hash_index = cur_pixel.hash_value()
         
-        if hash_array[hash_index] is None:
+        if hash_array[hash_index] == Pixel(0, 0, 0):
             hash_array[hash_index] = cur_pixel
             
         elif hash_array[hash_index] == cur_pixel:
@@ -297,7 +298,7 @@ def encode(R: list,
 
 
 
-def run_encoder(png_filename, qoi_filename=None):
+def run_encoder(png_filename, qoi_filename=None) -> Tuple[str, float]:
     """
     Run qoi encode algorithm on image "png_filename"
     Save encoded qoi image as "qoi_filename"
