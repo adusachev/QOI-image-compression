@@ -1,10 +1,12 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import cv2 as cv
+import matplotlib.pyplot as plt  # type: ignore
+import cv2 as cv  # type: ignore
+from typing import Tuple, List
 
 
-
-def read_png(path_to_png, draw_img=False, draw_flatten_img=False):
+def read_png(path_to_png: str, 
+             draw_img: bool = False,
+             draw_flatten_img: bool = False) -> Tuple[np.ndarray, List[int], List[int], List[int]]:
     """
     Read .png image and return flatten array of each channel
     Draw image and flatten image if required
@@ -37,9 +39,12 @@ def read_png(path_to_png, draw_img=False, draw_flatten_img=False):
         plt.xticks([])
         plt.yticks([])
         
-    # convert np.array with np.int64 elems to list with int elems (for correct work of n.to_bytes())
-    R_flat = R_flat.tolist()
-    G_flat = G_flat.tolist()
-    B_flat = B_flat.tolist()
-                
-    return img, R_flat, G_flat, B_flat
+    # convert np.array with np.int64 elems to list with int elems 
+    # for correct work of n.to_bytes()            
+    return img, R_flat.tolist(), G_flat.tolist(), B_flat.tolist()
+
+
+if __name__ == "__main__":
+    path = "/mnt/c/Users/Aleksei/Desktop/image compression/QOI-image-compression/png_images/R_video.png"
+    
+    res = read_png(path)
