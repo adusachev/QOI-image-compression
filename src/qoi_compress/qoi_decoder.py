@@ -87,7 +87,7 @@ def decode(filename: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray, int, int]
         
     height, width, _, _ = read_qoi_header(qoi_bytes)
     n = width * height
-    m = len(qoi_bytes)
+    m = len(qoi_bytes) - 8  # offset 8 - qoi end bytes
     
     R_decoded = np.zeros(n)
     G_decoded = np.zeros(n)
@@ -95,7 +95,7 @@ def decode(filename: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray, int, int]
     hash_array = [Pixel(0, 0, 0) for i in range(64)]
     
     pixel_counter = 0  # flatten image counter
-    byte_counter = 14  # qoi bytes counter, starts from 14 because qoi header takes 14 bytes
+    byte_counter = 14  # qoi bytes counter, offset 14 - qoi header bytes
     cur_pixel = Pixel(0, 0, 0)
     
     while byte_counter != m:

@@ -26,6 +26,8 @@ class MagicBytes(int, Enum):
     MAGIC_O = 0b01101111
     MAGIC_I = 0b01101001
     MAGIC_F = 0b01100110
+    FILE_END_0 = 0b00000000
+    FILE_END_1 = 0b00000001
 
 
 class Pixel:
@@ -214,6 +216,17 @@ def write_qoi_header(image: np.ndarray, file_content: io.BufferedWriter) -> None
     file_content.write(height_binary)
     file_content.write(channels.to_bytes(length=1, byteorder='big'))
     file_content.write(colorspace.to_bytes(length=1, byteorder='big'))
+    
+    
+
+def write_qoi_end(file_content: io.BufferedWriter) -> None:
+    """
+    Write qoi end bytes to file
+    """
+    end_chunk = [MagicBytes.FILE_END_0.value for i in range(7)]
+    end_chunk.append(MagicBytes.FILE_END_1.value)
+    
+    write_chunk(end_chunk, file_content)
 
 
 
@@ -291,6 +304,7 @@ def encode(R: List[int],
         run_length = 0
         is_run = False
         
+    write_qoi_end(file)
     
 
 
@@ -327,6 +341,6 @@ def run_encoder(png_filename: str, qoi_filename: Optional[str] = None) -> Tuple[
 
 
 if __name__ == '__main__':
-    png_filename = str(BASE_DIR / "debug_png_images/R_video.png")
+    png_filename = str(BASE_DIR / "png_images/doge.png")
     
     qoi_filename, time_elapsed = run_encoder(png_filename)
