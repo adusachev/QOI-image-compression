@@ -24,7 +24,7 @@ def decode_byte_part(byte: int, right_offset: int, bits_num: int) -> int:
 
 
 
-def decode_diff_small(byte: int) -> Tuple[int, int, int]:
+def decode_diff_small(byte: int) -> Tuple[int, ...]:
     """
     Extract dr, dg, db from diff small byte
     """
@@ -38,7 +38,7 @@ def decode_diff_small(byte: int) -> Tuple[int, int, int]:
     return dr, dg, db
 
 
-def decode_diff_med(byte1: int, byte2: int) -> Tuple[int, int, int]:
+def decode_diff_med(byte1: int, byte2: int) -> Tuple[int, ...]:
     """
     Extract dr, dg, db from diff med bytes
     """
@@ -55,7 +55,7 @@ def decode_diff_med(byte1: int, byte2: int) -> Tuple[int, int, int]:
 
 
 
-def read_qoi_header(qoi_bytes: bytes) -> Tuple[int, int, int, int]:
+def read_qoi_header(qoi_bytes: bytes) -> Tuple[int, ...]:
     """
     Read qoi header and return info about image
     """
@@ -75,7 +75,7 @@ def read_qoi_header(qoi_bytes: bytes) -> Tuple[int, int, int, int]:
 
 
 
-def decode(filename: str):
+def decode(filename: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray, int, int]:
     """
     Algorithm of QOI decoder
     
@@ -93,7 +93,7 @@ def decode(filename: str):
     R_decoded = np.zeros(n)
     G_decoded = np.zeros(n)
     B_decoded = np.zeros(n)
-    hash_array = [None for i in range(64)]
+    hash_array = [Pixel(0, 0, 0) for i in range(64)]
     
     m = len(qoi_bytes)
     
@@ -167,7 +167,7 @@ def decode(filename: str):
     
     
     
-def run_decoder(qoi_filename):
+def run_decoder(qoi_filename: str) -> Tuple[np.ndarray, float]:
     """
     Run qoi decode algorithm on image "qoi_filename" 
     """
