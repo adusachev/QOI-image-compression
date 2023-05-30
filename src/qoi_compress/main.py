@@ -58,6 +58,6 @@ if __name__ == '__main__':
     # qoi_filename = str(BASE_DIR / 'qoi_images/tmp.qoi')
     # run_single_experiment(png_filename, qoi_filename)
     
-    # dir_with_png = str(BASE_DIR / "debug_png_images/")
-    # dir_with_qoi = str(BASE_DIR / "qoi_images/")
-    # run_multiple_experiments(dir_with_png, dir_with_qoi)
+    dir_with_png = str(BASE_DIR / "debug_png_images/")
+    dir_with_qoi = str(BASE_DIR / "qoi_images/")
+    run_multiple_experiments(dir_with_png, dir_with_qoi)
