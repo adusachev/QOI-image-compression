@@ -40,7 +40,9 @@ jobs:
         with:
           name: whl_artifact
       - name: Install package
-        run: pip3 install qoi_compress-*.whl
+        run: | 
+          pip3 install --upgrade pip
+          pip3 install qoi_compress-*.whl
       - name: Run tests
         run: python -m unittest discover -s tests
 
