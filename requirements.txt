@@ -1,3 +1,14 @@
+contourpy==1.1.1
+cycler==0.12.1
+fonttools==4.52.1
+importlib_resources==6.4.0
+kiwisolver==1.4.5
 matplotlib==3.7.0
 numpy==1.24.2
+packaging==24.0
 Pillow==9.4.0
+pkg_resources==0.0.0
+pyparsing==3.1.2
+python-dateutil==2.9.0.post0
+six==1.16.0
+zipp==3.18.2
