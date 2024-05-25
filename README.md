@@ -28,7 +28,7 @@ python3 setup.py install
 ## Usage
 
 
-1) Encode: convert png image to qoi image
+1) **Encode**: convert png image to qoi image
 ```python
 from qoi_compress import qoi_encoder, qoi_decoder
 
@@ -38,7 +38,7 @@ qoi_file = "./qoi_images/doge.qoi"  # where to save qoi image
 qoi_encoder.run_encoder(png_file, qoi_file)
 ```
 
-2) Decode: import .qoi file into numpy array
+2) **Decode**: import .qoi file into numpy array
 ```python
 from qoi_compress import qoi_encoder, qoi_decoder
 
@@ -56,7 +56,7 @@ im = Image.fromarray(img_decoded.astype(np.uint8))
 im.save("img_decoded.png")
 ```
 
-3) Test: encode image `png_file` and save it as `qoi_file`, then decode `qoi_file` and compare decoded qoi image with original png image
+3) **Test**: encode image `png_file` and save it as `qoi_file`, then decode `qoi_file` and compare decoded qoi image with original png image
 ```python
 from qoi_compress.main import run_single_experiment
 
