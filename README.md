@@ -1,5 +1,5 @@
 
-[![Build Status](https://github.com/adusachev/QOI-image-compression/actions/workflows/testing.yml/badge.svg)](https://github.com/adusachev/QOI-image-compression/actions/workflows/testing.yml)
+[![Build Status](https://github.com/adusachev/QOI-image-compression/actions/workflows/build_and_test.yaml/badge.svg)](https://github.com/adusachev/QOI-image-compression/actions/workflows/build_and_test.yaml)
 
 
 # QOI image compression
