@@ -27,6 +27,10 @@ python3 setup.py install
 
 ## Usage
 
+```sh
+mkdir <PATH_TO_REPO>/qoi_images
+```
+
 
 1) **Encode**: convert png image to qoi image
 ```python
